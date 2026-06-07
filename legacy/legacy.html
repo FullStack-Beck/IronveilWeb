@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Ironveil — Dev Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0f0e; --bg2: #111513; --bg3: #161a18;
+    --surface: #1a1e1c; --surface2: #202523;
+    --border: rgba(180,160,100,0.15); --border2: rgba(180,160,100,0.28);
+    --gold: #c8a84b; --gold2: #e8c97a; --gold-dim: rgba(200,168,75,0.12);
+    --ember: #d4572a; --ember-dim: rgba(212,87,42,0.12);
+    --teal: #4a9e8a; --teal-dim: rgba(74,158,138,0.12);
+    --stone: #8a9490; --stone2: #b0bab6;
+    --text: #d8d4c8; --text2: #9a9590; --text3: #6a6560;
+    --font-display: 'Cinzel', serif;
+    --font-body: 'Crimson Pro', serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 6px; --radius-lg: 10px;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 17px; line-height: 1.6; min-height: 100vh; }
+  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:0; opacity:0.4; }
+
+  .app { position:relative; z-index:1; display:flex; flex-direction:column; min-height:100vh; }
+  /* ── LOGIN PAGE ── */
+  #auth-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .login-card {
+    width: 400px;
+    padding: 2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+  /* ── HEADER ── */
+  header { border-bottom: 1px solid var(--border); padding: 0 2rem; background: var(--bg2); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; height: 58px; }
+  .logo { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.12em; color: var(--gold); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+  .logo-rune { width: 28px; height: 28px; border: 1px solid var(--border2); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  nav { display: flex; gap: 2px; }
+  nav button { background: none; border: none; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.1em; color: var(--text2); padding: 6px 14px; border-radius: var(--radius); cursor: pointer; transition: all 0.2s; }
+  nav button:hover { color: var(--text); background: var(--surface); }
+  nav button.active { color: var(--gold); background: var(--gold-dim); }
+  .conn-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.3s; }
+  .conn-dot.ok { background: var(--teal); }
+  .conn-dot.err { background: var(--ember); }
+  .conn-label { font-family: var(--font-mono); font-size: 10px; color: var(--text3); }
+  .settings-btn { background: none; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text3); font-size: 14px; padding: 4px 8px; cursor: pointer; transition: all 0.15s; }
+  .settings-btn:hover { color: var(--text); border-color: var(--border2); }
+
+  /* ── HERO ── */
+  .hero { padding: 4rem 2rem 3rem; max-width: 900px; margin: 0 auto; width: 100%; text-align: center; }
+  .hero-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--gold); opacity: 0.7; text-transform: uppercase; margin-bottom: 1rem; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 700; color: var(--gold2); line-height: 1.15; margin-bottom: 1rem; text-shadow: 0 0 60px rgba(200,168,75,0.2); }
+  .hero p { font-size: 18px; color: var(--text2); max-width: 580px; margin: 0 auto 2rem; font-style: italic; font-weight: 300; }
+  .hero-stats { display: flex; justify-content: center; gap: 2.5rem; flex-wrap: wrap; }
+  .stat { text-align: center; }
+  .stat-num { font-family: var(--font-display); font-size: 1.8rem; font-weight: 600; color: var(--gold); display: block; }
+  .stat-label { font-size: 12px; color: var(--text3); font-family: var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* ── MAIN ── */
+  main { max-width: 1100px; margin: 0 auto; padding: 0 2rem 4rem; width: 100%; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── PHASES ── */
+  .phases { display: flex; flex-direction: column; gap: 1.5rem; }
+  .phase-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
+  .phase-head { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 14px; cursor: pointer; user-select: none; }
+  .phase-head:hover { background: var(--surface2); }
+  .phase-num { font-family: var(--font-display); font-size: 11px; letter-spacing: 0.15em; padding: 3px 10px; border-radius: 20px; flex-shrink: 0; margin-top: 2px; font-weight: 600; }
+  .phase-info { flex: 1; }
+  .phase-info h3 { font-family: var(--font-display); font-size: 14px; letter-spacing: 0.08em; color: var(--gold2); margin-bottom: 3px; font-weight: 600; }
+  .phase-info p { font-size: 14px; color: var(--text2); font-style: italic; }
+  .phase-progress-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+  .phase-pct { font-family: var(--font-mono); font-size: 12px; color: var(--gold); }
+  .pbar-outer { width: 100px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .pbar-inner { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+  .phase-chevron { color: var(--text3); font-size: 18px; margin-top: 2px; transition: transform 0.2s; flex-shrink: 0; }
+  .phase-card.open .phase-chevron { transform: rotate(180deg); }
+  .phase-body { display: none; }
+  .phase-card.open .phase-body { display: block; }
+  .tasks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; padding: 1.2rem 1.5rem; }
+  .task-item { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; display: flex; gap: 10px; align-items: flex-start; transition: border-color 0.2s, background 0.2s; }
+  .task-item.done { border-color: rgba(74,158,138,0.3); background: rgba(74,158,138,0.05); }
+  .task-item.done .task-name { text-decoration: line-through; color: var(--text3); }
+  .task-item.in-progress { border-color: rgba(200,168,75,0.3); background: rgba(200,168,75,0.05); }
+  .task-check { width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--border2); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all 0.2s; }
+  .task-item.done .task-check { background: var(--teal); border-color: var(--teal); color: #fff; }
+  .task-item.in-progress .task-check { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+  .task-name { font-size: 14px; color: var(--text); line-height: 1.4; }
+  .task-sub { font-size: 12px; color: var(--text3); margin-top: 2px; font-style: italic; }
+  .task-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; margin-left: auto; }
+  .status-btn { font-size: 10px; font-family: var(--font-mono); border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; transition: opacity 0.15s; letter-spacing: 0.05em; }
+  .status-btn:hover { opacity: 0.7; }
+  .btn-todo { background: var(--surface2); color: var(--text3); }
+  .btn-wip  { background: var(--gold-dim); color: var(--gold); }
+  .btn-done { background: var(--teal-dim); color: var(--teal); }
+  .phase-milestone { margin: 0 1.5rem 1.2rem; padding: 10px 14px; border-radius: var(--radius); border-left: 3px solid var(--gold); background: var(--gold-dim); font-size: 14px; color: var(--text2); font-style: italic; }
+  .phase-milestone strong { color: var(--gold); font-style: normal; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.1em; display: block; margin-bottom: 3px; }
+
+  /* ── DEVLOG ── */
+  .devlog-layout { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; align-items: start; }
+  @media (max-width: 768px) { .devlog-layout { grid-template-columns: 1fr; } }
+  .log-form-card { border: 1px solid var(--border2); border-radius: var(--radius-lg); background: var(--surface); padding: 1.5rem; position: sticky; top: 74px; }
+  .log-form-card h3 { font-family: var(--font-display); font-size: 13px; letter-spacing: 0.1em; color: var(--gold); margin-bottom: 1.2rem; }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--text3); text-transform: uppercase; margin-bottom: 5px; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font-body); font-size: 15px; padding: 8px 10px; outline: none; transition: border-color 0.2s; resize: vertical; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold); }
+  .form-group select option { background: var(--bg3); }
+  .form-group textarea { min-height: 80px; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag-chip { font-size: 11px; font-family: var(--font-mono); padding: 3px 8px; border-radius: 3px; border: 1px solid var(--border); color: var(--text2); cursor: pointer; transition: all 0.15s; background: none; }
+  .tag-chip.selected { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+  .submit-btn { width: 100%; background: var(--gold-dim); border: 1px solid var(--gold); border-radius: var(--radius); color: var(--gold2); font-family: var(--font-display); font-size: 12px; letter-spacing: 0.15em; padding: 10px; cursor: pointer; transition: background 0.2s; margin-top: 0.5rem; }
+  .submit-btn:hover { background: rgba(200,168,75,0.22); }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.2rem; }
+  .filter-btn { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .filter-btn:hover { border-color: var(--border2); color: var(--text); }
+  .filter-btn.active { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+  .log-entries { display: flex; flex-direction: column; gap: 14px; }
+  .log-empty { text-align: center; padding: 4rem 2rem; color: var(--text3); font-style: italic; border: 1px dashed var(--border); border-radius: var(--radius-lg); font-size: 15px; }
+  .log-entry { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; animation: fadeIn 0.3s ease; }
+  .entry-header { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .entry-author { font-family: var(--font-display); font-size: 12px; letter-spacing: 0.08em; color: var(--gold2); }
+  .entry-date { font-family: var(--font-mono); font-size: 11px; color: var(--text3); margin-left: auto; }
+  .entry-phase-tag, .entry-type-tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 3px; }
+  .entry-body { padding: 12px 14px; }
+  .entry-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .entry-notes { font-size: 14px; color: var(--text2); font-style: italic; }
+  .entry-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .entry-tag { font-size: 11px; font-family: var(--font-mono); padding: 2px 6px; border-radius: 3px; background: var(--surface2); color: var(--text3); }
+  .entry-delete { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 3px; transition: color 0.15s; }
+  .entry-delete:hover { color: var(--ember); }
+
+  /* ── CONTRIBUTORS ── */
+  .contributors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+  .contrib-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); padding: 1.2rem; display: flex; align-items: center; gap: 12px; }
+  .contrib-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--gold-dim); border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 14px; color: var(--gold); flex-shrink: 0; }
+  .contrib-name { font-family: var(--font-display); font-size: 13px; color: var(--gold2); letter-spacing: 0.06em; }
+  .contrib-role { font-size: 12px; color: var(--text3); font-style: italic; margin-top: 2px; }
+  .contrib-count { font-family: var(--font-mono); font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .ornament { text-align: center; color: var(--text3); font-size: 16px; letter-spacing: 0.5em; margin: 2rem 0 1.5rem; }
+
+  /* ── LOADING SKELETON ── */
+  .skeleton { background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--radius); }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* ── TOAST ── */
+  #toast { position: fixed; bottom: 24px; right: 24px; z-index: 999; background: var(--surface2); border: 1px solid var(--gold); color: var(--gold2); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; padding: 10px 16px; border-radius: var(--radius); opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.err { border-color: var(--ember); color: var(--ember); }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="auth-screen" class="login">
+  <div class="login-card">
+    <h2>⚒ login to IronVeil Roadmap</h2>
+
+    <input
+      type="email"
+      id="email"
+      placeholder="Email"
+    />
+
+    <input
+      type="password"
+      id="password"
+      placeholder="Password"
+    />
+
+    <button onclick="login()">
+      Sign In
+    </button>
+  </div>
+</div>
+<!-- ══════════ APP ══════════ -->
+<div class="app">
+  <header>
+    <a class="logo" href="#">
+      <div class="logo-rune">⚒</div>
+      Project Ironveil
+    </a>
+    <div class="header-right">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="conn-dot" id="conn-dot"></div>
+        <span class="conn-label" id="conn-label">disconnected</span>
+      </div>
+      <nav>
+        <button class="active" onclick="switchTab('roadmap',this)">Roadmap</button>
+        <button onclick="switchTab('devlog',this)">Devlog</button>
+        <button onclick="switchTab('team',this)">Team</button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-eyebrow">A Township Tale Revival</div>
+    <h1>Project Ironveil</h1>
+    <p>An open-development VR crafting RPG. Physics-first. Community-built.</p>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num" id="stat-done">—</span><span class="stat-label">Tasks done</span></div>
+      <div class="stat"><span class="stat-num" id="stat-wip">—</span><span class="stat-label">In progress</span></div>
+      <div class="stat"><span class="stat-num" id="stat-logs">—</span><span class="stat-label">Log entries</span></div>
+      <div class="stat"><span class="stat-num" id="stat-pct">—</span><span class="stat-label">Overall</span></div>
+    </div>
+  </div>
+
+  <main>
+    <!-- ROADMAP -->
+    <div class="tab-pane active" id="tab-roadmap">
+      <div class="phases" id="phases-container"></div>
+    </div>
+
+    <!-- DEVLOG -->
+    <div class="tab-pane" id="tab-devlog">
+      <div class="devlog-layout">
+        <div>
+          <div class="filter-row">
+            <button class="filter-btn active" onclick="filterLogs('all',this)">All</button>
+            <button class="filter-btn" onclick="filterLogs('Phase 1',this)">Phase 1</button>
+            <button class="filter-btn" onclick="filterLogs('Phase 2',this)">Phase 2</button>
+            <button class="filter-btn" onclick="filterLogs('Phase 3',this)">Phase 3</button>
+            <button class="filter-btn" onclick="filterLogs('Phase 4',this)">Phase 4</button>
+            <button class="filter-btn" onclick="filterLogs('General',this)">General</button>
+          </div>
+          <div class="log-entries" id="log-entries">
+            <div class="log-empty">Loading entries...</div>
+          </div>
+        </div>
+        <div class="log-form-card">
+          <h3>⊕ New Log Entry</h3>
+          <div class="form-group"><label>Your name / handle</label><input type="text" id="log-author" placeholder="e.g. yourname" /></div>
+          <div class="form-group"><label>Title</label><input type="text" id="log-title" placeholder="What did you work on?" /></div>
+          <div class="form-group">
+            <label>Phase</label>
+            <select id="log-phase">
+              <option value="Phase 1">Phase 1 — VR Physics Feel</option>
+              <option value="Phase 2">Phase 2 — Crafting Chains</option>
+              <option value="Phase 3">Phase 3 — Multiplayer</option>
+              <option value="Phase 4">Phase 4 — World & Content</option>
+              <option value="General">General / Research</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select id="log-type">
+              <option value="progress">Progress update</option>
+              <option value="milestone">Milestone reached</option>
+              <option value="blocker">Blocker / problem</option>
+              <option value="research">Research / notes</option>
+              <option value="design">Design decision</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Notes</label><textarea id="log-notes" placeholder="What worked, what didn't, links, thoughts..."></textarea></div>
+          <div class="form-group">
+            <label>Tags</label>
+            <div class="tag-row">
+              <button class="tag-chip" onclick="toggleTag(this)">physics</button>
+              <button class="tag-chip" onclick="toggleTag(this)">networking</button>
+              <button class="tag-chip" onclick="toggleTag(this)">crafting</button>
+              <button class="tag-chip" onclick="toggleTag(this)">ai/enemies</button>
+              <button class="tag-chip" onclick="toggleTag(this)">art/assets</button>
+              <button class="tag-chip" onclick="toggleTag(this)">UI/UX</button>
+              <button class="tag-chip" onclick="toggleTag(this)">audio</button>
+              <button class="tag-chip" onclick="toggleTag(this)">Steam</button>
+              <button class="tag-chip" onclick="toggleTag(this)">design</button>
+              <button class="tag-chip" onclick="toggleTag(this)">bug fix</button>
+            </div>
+          </div>
+          <button class="submit-btn" id="submit-btn" onclick="submitLog()">Post Entry</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEAM -->
+    <div class="tab-pane" id="tab-team">
+      <div class="ornament">— ✦ —</div>
+      <p style="text-align:center;color:var(--text2);font-style:italic;margin-bottom:2rem;">Everyone who has posted a log entry appears here automatically.</p>
+      <div class="contributors-grid" id="contributors-grid">
+        <div style="grid-column:1/-1;text-align:center;color:var(--text3);font-style:italic;padding:3rem;">Loading contributors...</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG DATA
+// ══════════════════════════════════════════
+const PHASES = [
+  {
+    id:'p1', num:'Phase 1', title:'VR Physics Feel',
+    desc:'The soul of the game. One player. One room. Make it feel incredible.',
+    color:{ badge:'background:rgba(74,158,138,0.18);color:#4a9e8a', bar:'#4a9e8a', ms:'border-color:#4a9e8a;background:rgba(74,158,138,0.08)' },
+    tasks:[
+      {id:'t1_1',name:'Unity LTS + SteamVR setup',sub:'Project structure, OpenXR, Valve Index input profile'},
+      {id:'t1_2',name:'VR hand presence & finger tracking',sub:'Index controller finger curl via SteamVR Input'},
+      {id:'t1_3',name:'Physics-based grab & throw',sub:'XRI velocity-based rigidbody grab, release arc'},
+      {id:'t1_4',name:'Object-to-object attachment',sub:'Runtime joint creation, snap points, detach logic'},
+      {id:'t1_5',name:'Motion detection (swing, angle, force)',sub:'Velocity threshold, swing arc, impact direction'},
+      {id:'t1_6',name:'Physical backpack & belt slots',sub:'Proximity-based over-shoulder storage zones'},
+      {id:'t1_7',name:'Basic forge/anvil interaction',sub:'Heat state machine, glowing material, tong grab'},
+      {id:'t1_8',name:'Hammer strike detection',sub:'Angle of impact → quality modifier on craft result'},
+    ],
+    milestone:'Pick up ore, carry it to a forge, pull out a glowing ingot, hammer it on an anvil. It feels physically satisfying.'
+  },
+  {
+    id:'p2', num:'Phase 2', title:'Crafting Chains',
+    desc:'2–3 full profession loops. Every step physical, multi-stage, learnable by doing.',
+    color:{ badge:'background:rgba(200,168,75,0.15);color:#c8a84b', bar:'#c8a84b', ms:'border-color:#c8a84b;background:rgba(200,168,75,0.08)' },
+    tasks:[
+      {id:'t2_1',name:'Mining loop',sub:'Pickaxe swing → ore chunk spawn → carry to surface'},
+      {id:'t2_2',name:'Smelting & heat system',sub:'Furnace temp, bellows, melt timing, ingot mold'},
+      {id:'t2_3',name:'Smithing: forge a blade',sub:'Multi-strike shaping, edge angle, quench in water'},
+      {id:'t2_4',name:'Modular weapon assembly',sub:'Handle + head socket system, balance affects stats'},
+      {id:'t2_5',name:'Woodcutting → carpentry',sub:'Chop tree, log physics, saw into planks, join pieces'},
+      {id:'t2_6',name:'Skill progression from actions',sub:'Track swings/crafts per skill, expose stat bonuses'},
+      {id:'t2_7',name:'Material tier system',sub:'Flint → copper → iron → steel, different resistances'},
+      {id:'t2_8',name:'Basic mine environment',sub:'Hand-built cave, ore veins, lighting, hazard zones'},
+    ],
+    milestone:'Full blacksmith loop. Mine ore, smelt it, forge a blade, attach handle. Weapon stats reflect how well you built it.'
+  },
+  {
+    id:'p3', num:'Phase 3', title:'Multiplayer Foundation',
+    desc:'The wall. Networked physics for 2–4 players. Budget twice the time you think.',
+    color:{ badge:'background:rgba(212,87,42,0.15);color:#d4572a', bar:'#d4572a', ms:'border-color:#d4572a;background:rgba(212,87,42,0.08)' },
+    tasks:[
+      {id:'t3_1',name:'Fish-Net setup & basic session',sub:'Server/host model, lobby, player spawn'},
+      {id:'t3_2',name:'VR hand & body sync',sub:'Head + hand transform sync, remote player avatar'},
+      {id:'t3_3',name:'Networked physics objects',sub:'Client authority, ownership transfer, lag comp'},
+      {id:'t3_4',name:'Player-to-player item handoff',sub:'Ownership transfer on grab from another player'},
+      {id:'t3_5',name:'Persistent world state',sub:'Item positions synced to DB, loaded on join'},
+      {id:'t3_6',name:'Dedicated server architecture',sub:'Headless Unity server, SteamGameServer API'},
+      {id:'t3_7',name:'Server-authoritative crafting',sub:'Server-validated outcomes, sanity checks'},
+      {id:'t3_8',name:'Voice proximity chat',sub:'Dissonance or SteamVoice, 3D falloff, mute zones'},
+    ],
+    milestone:'Two players. One forges, one hands ore. Items on the ground are there when you log back in.'
+  },
+  {
+    id:'p4', num:'Phase 4', title:'World & Content',
+    desc:'Town hub, wilderness, dungeons. Enemies. 8-player sessions. Roles emerge naturally.',
+    color:{ badge:'background:rgba(138,148,144,0.2);color:#b0bab6', bar:'#8a9490', ms:'border-color:#8a9490;background:rgba(138,148,144,0.08)' },
+    tasks:[
+      {id:'t4_1',name:'Town hub design',sub:'Forge, carpenter, general store, notice board'},
+      {id:'t4_2',name:'Wilderness biome',sub:'Forest, cliffs, river — resource spawns, day/night'},
+      {id:'t4_3',name:'Enemy AI — patrol & melee',sub:'NavMesh, awareness state machine, melee range'},
+      {id:'t4_4',name:'Dungeon zone with loot',sub:'Handcrafted cave system, chest drops, boss room'},
+      {id:'t4_5',name:'Player economy & trading',sub:'Notice board, barter UI, currency from drops'},
+      {id:'t4_6',name:'Scale to 8 players',sub:'Interest management, LOD culling for remote players'},
+      {id:'t4_7',name:'Additional professions',sub:'Herbalist, cook, leatherworker — 1 loop each'},
+      {id:'t4_8',name:'Steam & SteamVR release prep',sub:'App ID, store page, Steamworks SDK integration'},
+    ],
+    milestone:'4–8 strangers log in, split into roles naturally, run a dungeon, come back and forge gear from the drops.'
+  }
+];
+
+const TYPE_COLORS = {
+  progress:  {bg:'rgba(74,158,138,0.15)',  color:'#4a9e8a'},
+  milestone: {bg:'rgba(200,168,75,0.15)',  color:'#c8a84b'},
+  blocker:   {bg:'rgba(212,87,42,0.15)',   color:'#d4572a'},
+  research:  {bg:'rgba(100,120,200,0.15)', color:'#8899dd'},
+  design:    {bg:'rgba(180,130,200,0.15)', color:'#c088cc'},
+};
+const PHASE_COLORS = {
+  'Phase 1':{bg:'rgba(74,158,138,0.15)',  color:'#4a9e8a'},
+  'Phase 2':{bg:'rgba(200,168,75,0.15)',  color:'#c8a84b'},
+  'Phase 3':{bg:'rgba(212,87,42,0.15)',   color:'#d4572a'},
+  'Phase 4':{bg:'rgba(138,148,144,0.2)',  color:'#b0bab6'},
+  'General':{bg:'rgba(100,120,200,0.15)', color:'#8899dd'},
+};
+
+// ══════════════════════════════════════════
+// SUPABASE INIT
+// ══════════════════════════════════════════
+const SUPABASE_URL =
+  'https://avnitfrmpyikibsrxpst.supabase.co';
+
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2bml0ZnJtcHlpa2lic3J4cHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NzYyNTIsImV4cCI6MjA5NjM1MjI1Mn0.M9UUUcR6S0Snn9B5H8EuuWVeDMcy3HWsHKwbOhuG8hQ';
+
+let sb = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+let taskStates = {};
+let activeFilter = 'all';
+
+function setConnected(ok) {
+  document.getElementById('conn-dot').className = 'conn-dot ' + (ok ? 'ok' : 'err');
+  document.getElementById('conn-label').textContent = ok ? 'live' : 'disconnected';
+}
+
+// ══════════════════════════════════════════
+// Login Functions
+// ══════════════════════════════════════════
+
+async function login() {
+  const email =
+    document.getElementById('email').value;
+
+  const password =
+    document.getElementById('password').value;
+
+  const { error } =
+    await sb.auth.signInWithPassword({
+      email,
+      password
+    });
+
+  if (error) {
+    showToast(error.message, true);
+    return;
+  }
+
+  startApp();
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+// ══════════════════════════════════════════
+// TASK STATES
+// ══════════════════════════════════════════
+async function loadTaskStates() {
+  const { data, error } = await sb.from('task_states').select('*');
+  if (error) { console.error(error); return; }
+  taskStates = {};
+  (data || []).forEach(r => { taskStates[r.task_id] = r.state; });
+}
+
+async function setTask(id, state, e) {
+  if (e) e.stopPropagation();
+  taskStates[id] = state;
+  renderRoadmap();
+
+  const { error } = await sb.from('task_states').upsert({ task_id: id, state, updated_at: new Date().toISOString() }, { onConflict: 'task_id' });
+  if (error) { showToast('Save failed', true); return; }
+  showToast(state === 'done' ? 'Marked done ✓' : state === 'in-progress' ? 'Marked in progress' : 'Reset');
+  updateStats();
+}
+
+// ══════════════════════════════════════════
+// REALTIME
+// ══════════════════════════════════════════
+function subscribeRealtime() {
+  sb.channel('ironveil')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'task_states' }, payload => {
+      const r = payload.new || payload.old;
+      if (r && r.task_id) {
+        taskStates[r.task_id] = r.state || 'todo';
+        renderRoadmap();
+        updateStats();
+      }
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'log_entries' }, () => {
+      renderLogs();
+      renderContributors();
+      updateStats();
+    })
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'log_entries' }, () => {
+      renderLogs();
+      renderContributors();
+      updateStats();
+    })
+    .subscribe(status => {
+      setConnected(status === 'SUBSCRIBED');
+    });
+}
+
+// ══════════════════════════════════════════
+// RENDER ROADMAP
+// ══════════════════════════════════════════
+function renderRoadmap() {
+  const container = document.getElementById('phases-container');
+  const openIds = [...document.querySelectorAll('.phase-card.open')].map(c => c.dataset.pid);
+  container.innerHTML = '';
+
+  PHASES.forEach((phase, pi) => {
+    const done  = phase.tasks.filter(t => taskStates[t.id] === 'done').length;
+    const total = phase.tasks.length;
+    const pct   = Math.round((done / total) * 100);
+    const isOpen = openIds.includes(phase.id) || (openIds.length === 0 && pi === 0);
+
+    const card = document.createElement('div');
+    card.className = 'phase-card' + (isOpen ? ' open' : '');
+    card.dataset.pid = phase.id;
+    card.innerHTML = `
+      <div class="phase-head" onclick="this.parentElement.classList.toggle('open')">
+        <span class="phase-num" style="${phase.color.badge}">${phase.num}</span>
+        <div class="phase-info"><h3>${phase.title}</h3><p>${phase.desc}</p></div>
+        <div class="phase-progress-wrap">
+          <span class="phase-pct">${done}/${total}</span>
+          <div class="pbar-outer"><div class="pbar-inner" style="width:${pct}%;background:${phase.color.bar}"></div></div>
+        </div>
+        <span class="phase-chevron">⌄</span>
+      </div>
+      <div class="phase-body">
+        <div class="tasks-grid">
+          ${phase.tasks.map(t => {
+            const state = taskStates[t.id] || 'todo';
+            const check = state==='done' ? '✓' : state==='in-progress' ? '◐' : '';
+            return `<div class="task-item ${state}" id="task-${t.id}">
+              <div class="task-check">${check}</div>
+              <div style="flex:1"><div class="task-name">${t.name}</div><div class="task-sub">${t.sub}</div></div>
+              <div class="task-actions">
+                <button class="status-btn btn-wip"  onclick="setTask('${t.id}','in-progress',event)">WIP</button>
+                <button class="status-btn btn-done" onclick="setTask('${t.id}','done',event)">DONE</button>
+                <button class="status-btn btn-todo" onclick="setTask('${t.id}','todo',event)">RESET</button>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="phase-milestone" style="${phase.color.ms}">
+          <strong>Milestone</strong>${phase.milestone}
+        </div>
+      </div>`;
+    container.appendChild(card);
+  });
+
+  updateStats();
+}
+
+// ══════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════
+async function updateStats() {
+  const allTasks = PHASES.flatMap(p => p.tasks);
+  const done = allTasks.filter(t => taskStates[t.id] === 'done').length;
+  const wip  = allTasks.filter(t => taskStates[t.id] === 'in-progress').length;
+  const pct  = Math.round((done / allTasks.length) * 100);
+
+  const { count } = sb
+    ? await sb.from('log_entries').select('*', { count: 'exact', head: true })
+    : { count: 0 };
+
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-wip').textContent  = wip;
+  document.getElementById('stat-logs').textContent = count ?? '—';
+  document.getElementById('stat-pct').textContent  = pct + '%';
+}
+
+// ══════════════════════════════════════════
+// DEVLOG
+// ══════════════════════════════════════════
+function toggleTag(btn) { btn.classList.toggle('selected'); }
+
+async function submitLog() {
+  const author = document.getElementById('log-author').value.trim();
+  const title  = document.getElementById('log-title').value.trim();
+  const phase  = document.getElementById('log-phase').value;
+  const type   = document.getElementById('log-type').value;
+  const notes  = document.getElementById('log-notes').value.trim();
+  const tags   = [...document.querySelectorAll('.tag-chip.selected')].map(b => b.textContent);
+
+  if (!author || !title) { showToast('Name and title required', true); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Posting...';
+
+  const { error } = await sb.from('log_entries').insert({ author, title, phase, type, notes, tags });
+
+  btn.disabled = false; btn.textContent = 'Post Entry';
+
+  if (error) { showToast('Post failed: ' + error.message, true); return; }
+
+  document.getElementById('log-title').value = '';
+  document.getElementById('log-notes').value = '';
+  document.querySelectorAll('.tag-chip.selected').forEach(b => b.classList.remove('selected'));
+
+  await renderLogs();
+  await renderContributors();
+  await updateStats();
+  showToast('Entry posted ✦');
+}
+
+function filterLogs(filter, btn) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLogs();
+}
+
+async function renderLogs() {
+  if (!sb) return;
+  const container = document.getElementById('log-entries');
+  container.innerHTML = '<div class="log-empty">Loading...</div>';
+
+  let q = sb.from('log_entries').select('*').order('created_at', { ascending: false });
+  if (activeFilter !== 'all') q = q.eq('phase', activeFilter);
+  const { data, error } = await q;
+
+  if (error) { container.innerHTML = '<div class="log-empty">Failed to load entries.</div>'; return; }
+  if (!data || data.length === 0) { container.innerHTML = '<div class="log-empty">No entries yet. Start logging your work.</div>'; return; }
+
+  container.innerHTML = data.map(entry => {
+    const tc = TYPE_COLORS[entry.type] || TYPE_COLORS.progress;
+    const pc = PHASE_COLORS[entry.phase] || PHASE_COLORS['General'];
+    const date = new Date(entry.created_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+    return `<div class="log-entry">
+      <div class="entry-header">
+        <span class="entry-author">${entry.author}</span>
+        <span class="entry-phase-tag" style="background:${pc.bg};color:${pc.color}">${entry.phase}</span>
+        <span class="entry-type-tag"  style="background:${tc.bg};color:${tc.color}">${entry.type}</span>
+        <span class="entry-date">${date}</span>
+        <button class="entry-delete" onclick="deleteLog(${entry.id})" title="Delete">✕</button>
+      </div>
+      <div class="entry-body">
+        <div class="entry-title">${entry.title}</div>
+        ${entry.notes ? `<div class="entry-notes">${entry.notes}</div>` : ''}
+        ${entry.tags && entry.tags.length ? `<div class="entry-tags">${entry.tags.map(t=>`<span class="entry-tag">${t}</span>`).join('')}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function deleteLog(id) {
+  const { error } = await sb.from('log_entries').delete().eq('id', id);
+  if (error) { showToast('Delete failed', true); return; }
+  await renderLogs();
+  await renderContributors();
+  await updateStats();
+  showToast('Entry deleted');
+}
+
+async function renderContributors() {
+  if (!sb) return;
+  const { data } = await sb.from('log_entries').select('author, phase');
+  const grid = document.getElementById('contributors-grid');
+  if (!data || data.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text3);font-style:italic;padding:3rem;">No contributors yet.</div>';
+    return;
+  }
+  const map = {};
+  data.forEach(l => {
+    if (!map[l.author]) map[l.author] = { name: l.author, count: 0, phases: new Set() };
+    map[l.author].count++;
+    map[l.author].phases.add(l.phase);
+  });
+  grid.innerHTML = Object.values(map).map(c => `
+    <div class="contrib-card">
+      <div class="contrib-avatar">${c.name.slice(0,2).toUpperCase()}</div>
+      <div>
+        <div class="contrib-name">${c.name}</div>
+        <div class="contrib-role">${[...c.phases].join(', ')}</div>
+        <div class="contrib-count">${c.count} log ${c.count===1?'entry':'entries'}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'devlog') renderLogs();
+  if (name === 'team')   renderContributors();
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isErr ? ' err' : '');
+  setTimeout(() => t.className = '', 2400);
+}
+
+// ══════════════════════════════════════════
+// Start App
+// ══════════════════════════════════════════
+
+async function startApp() {
+  document
+    .getElementById('auth-screen')
+    .style.display = 'none';
+
+  document
+    .querySelector('.app')
+    .style.display = 'flex';
+
+  await loadTaskStates();
+  renderRoadmap();
+  await renderLogs();
+  await renderContributors();
+  await updateStats();
+
+  subscribeRealtime();
+}
+
+// ══════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════
+(async () => {
+  const {
+    data: { session }
+  } = await sb.auth.getSession();
+
+  if (!session) {
+    document
+      .getElementById('auth-screen')
+      .style.display = 'flex';
+
+    document
+      .querySelector('.app')
+      .style.display = 'none';
+
+    return;
+  }
+
+  startApp();
+})();
+</script>
+</body>
+</html>
