@@ -798,6 +798,7 @@ const TASKS = [
 
 let currentUser = null;
 let currentProfile = null;
+let realtimeChannel = null;
 
 // ─── AUTH ─────────────────────────────────────────────────────
 async function login() {
@@ -1087,11 +1088,33 @@ async function savePlaytest() {
 
 // ─── REALTIME ─────────────────────────────────────────────────
 function subscribeRealtime() {
-  sb.channel('admin-changes')
-    .on('postgres_changes', { event:'*', schema:'public', table:'task_states' },     () => { loadRoadmapPage(); loadOverview(); })
-    .on('postgres_changes', { event:'*', schema:'public', table:'task_assignments'}, () => reloadSprintTable())
-    .on('postgres_changes', { event:'*', schema:'public', table:'public_updates'},   () => { loadUpdatesPage(); loadOverview(); })
-    .on('postgres_changes', { event:'*', schema:'public', table:'profiles'},         () => loadTeamPage())
+  if (realtimeChannel) {
+    sb.removeChannel(realtimeChannel);
+  }
+
+  realtimeChannel = sb.channel('admin-changes')
+    .on('postgres_changes',
+      { event:'*', schema:'public', table:'task_states' },
+      () => {
+        loadRoadmapPage();
+        loadOverview();
+      }
+    )
+    .on('postgres_changes',
+      { event:'*', schema:'public', table:'task_assignments' },
+      () => reloadSprintTable()
+    )
+    .on('postgres_changes',
+      { event:'*', schema:'public', table:'public_updates' },
+      () => {
+        loadUpdatesPage();
+        loadOverview();
+      }
+    )
+    .on('postgres_changes',
+      { event:'*', schema:'public', table:'profiles' },
+      () => loadTeamPage()
+    )
     .subscribe();
 }
 
