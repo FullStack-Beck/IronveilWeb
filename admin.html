@@ -777,6 +777,10 @@ async function initializeAuth() {
   }
 }
 
+let currentUser = null;
+let currentProfile = null;
+let realtimeChannel = null;
+
 initializeAuth();
 
 const TASKS = [
@@ -795,10 +799,6 @@ const TASKS = [
   {id:'t4_2', name:'Voice Proximity Chat',       phase:'Social'},
   {id:'t4_3', name:'Player Profiles',            phase:'Social'},
 ];
-
-let currentUser = null;
-let currentProfile = null;
-let realtimeChannel = null;
 
 // ─── AUTH ─────────────────────────────────────────────────────
 async function login() {
