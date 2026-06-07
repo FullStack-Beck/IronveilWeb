@@ -807,7 +807,11 @@ async function login() {
 
 async function logout() {
   await sb.auth.signOut();
-  location.reload();
+
+  currentUser = null;
+
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
 }
 
 sb.auth.onAuthStateChange(async (event, session) => {
