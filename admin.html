@@ -1407,31 +1407,47 @@ let realtimeChannel = null;
 // subtask edits in the task modal (pending save)
 let pendingSubtasks = []; // { id?, name, done, _new?, _delete? }
 
-/* ═══════════════════════════════════════════════════════════
-   AUTH
-═══════════════════════════════════════════════════════════ */
-sb.auth.onAuthStateChange(async (event, session) => {
-  console.log('AUTH EVENT:', event, session?.user?.id);
+// ── AUTH INIT ──────────────────────────────────────────────
+async function initAuth() {
+  // First try to get existing session
+  const { data: { session } } = await sb.auth.getSession();
+  
   if (session?.user) {
     currentUser = session.user;
-    console.log('ABOUT TO FETCH PROFILE');
     try {
       const result = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
-      console.log('PROFILE RESULT:', result);
       currentProfile = result.data;
       showDashboard();
       await loadAll();
       subscribeRealtime();
     } catch(err) {
-      console.error('CRASH:', err);
+      console.error('Profile load error:', err);
     }
-  } else {
-    currentUser = null;
-    currentProfile = null;
-    if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
-    showAuth();
   }
-});
+
+  // Then watch for future changes
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_OUT') {
+      currentUser = null;
+      currentProfile = null;
+      if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
+      showAuth();
+    } else if (event === 'SIGNED_IN' && !currentUser) {
+      currentUser = session.user;
+      try {
+        const result = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
+        currentProfile = result.data;
+        showDashboard();
+        await loadAll();
+        subscribeRealtime();
+      } catch(err) {
+        console.error('Profile load error:', err);
+      }
+    }
+  });
+}
+
+initAuth();
 
 function showAuth() {
   document.getElementById('auth-screen').style.display = 'flex';
