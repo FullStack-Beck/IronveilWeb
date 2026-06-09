@@ -1039,6 +1039,9 @@ hr.rune-divider::after {
       <button class="nav-item" onclick="showPage('playtest',this)">
         <span class="nav-icon">⬡</span><span>Playtest</span>
       </button>
+      <button class="nav-item" onclick="showPage('members',this)">
+        <span class="nav-icon">⚒</span><span>Members</span>
+      </button>
     </nav>
 
     <div class="sidebar-footer">
@@ -1291,6 +1294,29 @@ hr.rune-divider::after {
         </div>
       </div>
 
+      <!-- ══ MEMBERS ══ -->
+      <div class="page" id="page-members">
+        <div class="panel" style="margin-bottom:24px">
+          <div class="panel-header"><div class="panel-title">⚒ Guild Registry</div></div>
+          <div class="panel-body" style="padding:0">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Title</th>
+                  <th>Role</th>
+                  <th>Visibility</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="members-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main-area -->
 </div><!-- /dashboard -->
@@ -1376,6 +1402,49 @@ hr.rune-divider::after {
       <button class="btn danger sm" onclick="deleteGroup()" style="margin-right:auto"><span>Delete Chapter</span></button>
       <button class="btn secondary sm" onclick="closeGroupModal()"><span>Cancel</span></button>
       <button class="btn sm" onclick="saveGroup()"><span>Save</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MEMBER EDIT MODAL ═══════════════ -->
+<div class="modal-overlay" id="member-modal-overlay" onclick="closeMemberModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="mm-title">Edit Member</div>
+      <button class="modal-close" onclick="closeMemberModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="mm-id">
+      <div class="two-col">
+        <div class="field"><label>Display Name</label>
+          <input type="text" id="mm-name">
+        </div>
+        <div class="field"><label>Title</label>
+          <input type="text" id="mm-title-val" placeholder="e.g. Lead Forgemaster">
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label>Role</label>
+          <select id="mm-role">
+            <option value="user">user</option>
+            <option value="developer">developer</option>
+            <option value="admin">admin</option>
+          </select>
+        </div>
+        <div class="field"><label>Public Profile</label>
+          <select id="mm-public">
+            <option value="true">Visible on public portal</option>
+            <option value="false">Hidden</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Bio</label>
+        <textarea id="mm-bio" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn secondary sm" onclick="closeMemberModal()"><span>Cancel</span></button>
+      <button class="btn sm" onclick="saveMember()"><span>Save Changes</span></button>
     </div>
   </div>
 </div>
@@ -2088,6 +2157,69 @@ async function savePlaytest() {
   toast('Playtest status updated.');
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   MEMBERS PAGE
+═══════════════════════════════════════════════════════════════ */
+async function renderMembersPage() {
+  const { data } = await sb.from('profiles').select('*, auth_users:id(email)').order('created_at');
+  // auth emails aren't accessible from anon key — we'll show what we have
+  const { data: profiles } = await sb.from('profiles').select('*').order('created_at');
+  const tbody = document.getElementById('members-tbody');
+  if (!profiles?.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No members yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = profiles.map(m => `
+    <tr>
+      <td style="font-family:'Cinzel',serif;color:var(--gold)">${m.display_name || '(unnamed)'}</td>
+      <td style="font-size:14px;color:var(--ink4);font-family:'JetBrains Mono',monospace">${m.email || '—'}</td>
+      <td style="color:var(--ink3)">${m.title || '—'}</td>
+      <td><span class="badge ${m.role === 'admin' ? 'done' : m.role === 'developer' ? 'wip' : 'todo'}">${(m.role || 'user').toUpperCase()}</span></td>
+      <td>${m.is_public ? '<span class="badge pub">PUBLIC</span>' : '<span class="badge hidden">HIDDEN</span>'}</td>
+      <td style="font-size:13px;color:var(--ink4)">${m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}</td>
+      <td><button class="btn sm secondary" onclick="openMemberModal('${m.id}')"><span>✎ Edit</span></button></td>
+    </tr>
+  `).join('');
+}
+
+function openMemberModal(memberId) {
+  const { data: _ } = { data: null };
+  sb.from('profiles').select('*').eq('id', memberId).maybeSingle().then(({ data: m }) => {
+    if (!m) return;
+    document.getElementById('mm-id').value        = m.id;
+    document.getElementById('mm-name').value      = m.display_name || '';
+    document.getElementById('mm-title-val').value = m.title || '';
+    document.getElementById('mm-role').value      = m.role || 'user';
+    document.getElementById('mm-public').value    = m.is_public ? 'true' : 'false';
+    document.getElementById('mm-bio').value       = m.bio || '';
+    document.getElementById('mm-title').textContent = `Edit: ${m.display_name || 'Member'}`;
+    document.getElementById('member-modal-overlay').classList.add('open');
+  });
+}
+
+async function saveMember() {
+  const id = document.getElementById('mm-id').value;
+  const payload = {
+    display_name: document.getElementById('mm-name').value.trim(),
+    title:        document.getElementById('mm-title-val').value.trim(),
+    role:         document.getElementById('mm-role').value,
+    is_public:    document.getElementById('mm-public').value === 'true',
+    bio:          document.getElementById('mm-bio').value.trim(),
+    updated_at:   new Date().toISOString()
+  };
+  const { error } = await sb.from('profiles').update(payload).eq('id', id);
+  if (error) { toast('Error: ' + error.message, true); return; }
+  toast('Member updated.');
+  closeMemberModal();
+  await renderMembersPage();
+  await loadAll(); // refresh members cache for other pages
+}
+
+function closeMemberModal(e) {
+  if (e && e.target !== document.getElementById('member-modal-overlay')) return;
+  document.getElementById('member-modal-overlay').classList.remove('open');
+}
+
 /* ═══════════════════════════════════════════════════════════
    REALTIME
 ═══════════════════════════════════════════════════════════ */
@@ -2098,7 +2230,7 @@ function subscribeRealtime() {
     .on('postgres_changes',{ event:'*', schema:'public', table:'tasks'           }, () => loadAll())
     .on('postgres_changes',{ event:'*', schema:'public', table:'subtasks'        }, () => loadAll())
     .on('postgres_changes',{ event:'*', schema:'public', table:'public_updates'  }, () => renderUpdatesPage())
-    .on('postgres_changes',{ event:'*', schema:'public', table:'profiles'        }, () => { renderTeamPage(); populateRoleSelect(); })
+    .on('postgres_changes',{ event:'*', schema:'public', table:'profiles'        }, () => { renderTeamPage(); populateRoleSelect(); renderMembersPage();})
     .on('postgres_changes',{ event:'*', schema:'public', table:'playtest_status' }, () => renderPlaytestPage())
     .subscribe();
 }
