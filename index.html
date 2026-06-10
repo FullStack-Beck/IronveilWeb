@@ -782,6 +782,246 @@ footer::before {
   width: auto;
   display: block;
 }
+/* ══ DOWNLOAD SECTION ═══════════════════════════════════════ */
+#download {
+  padding: 80px 40px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.dl-hero-eyebrow {
+  font-family: 'Cinzel', serif;
+  font-size: 9.5px; letter-spacing: .38em;
+  color: var(--ink4);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.dl-hero-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(26px, 4vw, 42px);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: .04em;
+  line-height: 1;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.dl-hero-sub {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 17px;
+  color: var(--ink3);
+  margin-bottom: 40px;
+  text-align: center;
+  max-width: 540px;
+  margin-left: auto; margin-right: auto;
+}
+
+.os-strip {
+  display: inline-flex;
+  gap: 0;
+  border: 1.5px solid var(--border2);
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.os-btn {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  padding: 18px 36px;
+  background: var(--parch2);
+  border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  transition: all .2s;
+  font-family: 'Cinzel', serif;
+  position: relative;
+  overflow: hidden;
+  min-width: 180px;
+}
+.os-btn:last-child { border-right: none; }
+.os-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 100%);
+  opacity: 0; transition: opacity .25s;
+}
+.os-btn:hover::before { opacity: 1; }
+.os-btn:hover .os-label,
+.os-btn:hover .os-icon,
+.os-btn:hover .os-ver { color: var(--parch); }
+.os-btn.recommended {
+  background: linear-gradient(135deg, var(--ink) 0%, var(--ink2) 100%);
+}
+.os-btn.recommended .os-label,
+.os-btn.recommended .os-icon,
+.os-btn.recommended .os-ver { color: var(--parch); }
+.os-btn.recommended::after {
+  content: 'RECOMMENDED';
+  position: absolute; top: 0; right: 0;
+  font-family: 'Cinzel', serif;
+  font-size: 7.5px; letter-spacing: .14em;
+  background: var(--gold2); color: var(--ink);
+  padding: 3px 8px;
+}
+.os-icon { font-size: 24px; position: relative; z-index: 1; color: var(--ink3); transition: color .2s; }
+.os-label { font-size: 11px; letter-spacing: .14em; color: var(--ink2); position: relative; z-index: 1; transition: color .2s; }
+.os-ver { font-size: 9px; letter-spacing: .08em; color: var(--ink4); font-family: 'Crimson Pro', serif; position: relative; z-index: 1; transition: color .2s; }
+
+.reqs-strip {
+  display: flex; justify-content: center; gap: 28px;
+  flex-wrap: wrap; margin-bottom: 56px;
+}
+.req-item {
+  font-family: 'Cinzel', serif;
+  font-size: 9.5px; letter-spacing: .12em;
+  color: var(--ink4);
+  display: flex; align-items: center; gap: 7px;
+}
+.req-item::before {
+  content: ''; width: 4px; height: 4px;
+  background: var(--gold2); opacity: .6; display: inline-block;
+}
+
+.dl-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2px;
+  margin-bottom: 56px;
+}
+.dl-step-card {
+  background: var(--parch2);
+  border: 1px solid var(--border);
+  padding: 26px 22px;
+  position: relative;
+}
+.dl-step-num {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 44px; font-weight: 700;
+  color: rgba(139,105,20,.1);
+  line-height: 1;
+  position: absolute; top: 14px; right: 18px;
+}
+.dl-step-icon { font-size: 20px; margin-bottom: 10px; display: block; }
+.dl-step-title {
+  font-family: 'Cinzel', serif;
+  font-size: 12px; letter-spacing: .06em;
+  color: var(--ink); margin-bottom: 7px;
+}
+.dl-step-body { font-size: 14.5px; color: var(--ink3); line-height: 1.65; }
+
+.dl-center { display: flex; flex-direction: column; align-items: center; }
+
+/* Game builds table */
+.release-card {
+  background: var(--parch2);
+  border: 1px solid var(--border2);
+  overflow: hidden;
+  margin-bottom: 56px;
+  width: 100%;
+}
+.release-head {
+  background: linear-gradient(to right, var(--ink2), var(--ink));
+  padding: 14px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.release-title {
+  font-family: 'Cinzel', serif;
+  font-size: 11px; letter-spacing: .14em; color: var(--gold3);
+}
+.release-badge {
+  font-family: 'Cinzel', serif;
+  font-size: 9px; letter-spacing: .14em;
+  padding: 3px 10px;
+  border: 1px solid var(--gold2); color: var(--gold3);
+}
+.release-body { padding: 18px 22px; }
+.release-row {
+  display: grid;
+  grid-template-columns: 1fr 110px 110px 130px;
+  gap: 14px; align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.release-row:last-child { border-bottom: none; }
+.release-row.header {
+  font-family: 'Cinzel', serif;
+  font-size: 9px; letter-spacing: .14em; color: var(--ink4);
+  padding-bottom: 8px;
+}
+.release-name { color: var(--ink2); font-weight: 600; }
+.release-ver  { color: var(--ink4); font-family: 'Cinzel', serif; font-size: 10px; }
+.release-date { color: var(--ink4); font-size: 13px; }
+.btn-dl {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  background: var(--ink2); border: 1px solid var(--border2);
+  color: var(--parch);
+  font-family: 'Cinzel', serif;
+  font-size: 10px; letter-spacing: .1em;
+  cursor: pointer; transition: all .2s;
+  text-decoration: none; white-space: nowrap;
+}
+.btn-dl:hover { background: var(--ink); border-color: var(--gold2); }
+
+/* Auth / access walls */
+.dl-auth-wall {
+  background: var(--parch2); border: 1.5px solid var(--border2);
+  padding: 30px; text-align: center; margin-bottom: 56px;
+}
+.dl-auth-wall .lock { font-size: 26px; margin-bottom: 10px; display: block; }
+.dl-auth-wall-title {
+  font-family: 'Cinzel', serif;
+  font-size: 15px; letter-spacing: .06em; color: var(--ink); margin-bottom: 8px;
+}
+.dl-auth-wall p { font-style: italic; color: var(--ink3); margin-bottom: 18px; }
+.btn-dl-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 28px;
+  background: linear-gradient(135deg, var(--ink) 0%, var(--ink2) 100%);
+  border: 1.5px solid var(--gold2); color: var(--parch);
+  font-family: 'Cinzel', serif;
+  font-size: 11px; letter-spacing: .16em;
+  cursor: pointer; transition: all .2s; text-decoration: none;
+}
+.btn-dl-primary:hover { border-color: var(--gold4); box-shadow: 0 4px 20px rgba(139,105,20,.3); }
+
+/* FAQ */
+.dl-faq-list { display: flex; flex-direction: column; gap: 2px; }
+.dl-faq-item { background: var(--parch2); border: 1px solid var(--border); overflow: hidden; }
+.dl-faq-q {
+  width: 100%; padding: 15px 18px;
+  background: none; border: none;
+  font-family: 'Cinzel', serif;
+  font-size: 12px; letter-spacing: .06em; color: var(--ink);
+  text-align: left; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background .15s;
+}
+.dl-faq-q:hover { background: var(--parch3); }
+.dl-faq-arrow { color: var(--gold2); transition: transform .2s; }
+.dl-faq-item.open .dl-faq-arrow { transform: rotate(90deg); }
+.dl-faq-a {
+  display: none;
+  padding: 0 18px 14px;
+  color: var(--ink3); font-size: 15px; line-height: 1.7;
+  border-top: 1px solid var(--border);
+}
+.dl-faq-item.open .dl-faq-a { display: block; }
+
+@media (max-width: 680px) {
+  #download { padding: 56px 24px; }
+  .os-strip { flex-direction: column; }
+  .os-btn { border-right: none; border-bottom: 1px solid var(--border); }
+  .os-btn:last-child { border-bottom: none; }
+  .release-row { grid-template-columns: 1fr 80px; }
+  .release-row .release-ver, .release-row .release-date { display: none; }
+  .reqs-strip { flex-direction: column; align-items: center; gap: 10px; }
+}
 </style>
 </head>
 <body>
@@ -797,7 +1037,7 @@ footer::before {
     <a href="#sprint">Sprint</a>
     <a href="#team">Fellowship</a>
     <a href="#updates">Scrolls</a>
-    <a href="download.html">Download</a>
+    <a href="#download">Download</a>
   </nav>
   <div class="header-right" id="header-right">
     <button class="btn primary" onclick="openAuth()">⬡ Sign In / Join</button>
@@ -896,6 +1136,145 @@ footer::before {
     <div class="update-entry"><div class="skel" style="height:14px;width:80px"></div><div><div class="skel" style="height:18px;width:45%"></div></div></div>
   </div>
 </div>
+
+<!-- ─── DOWNLOAD ──────────────────────────────────────────────── -->
+<div class="section-divider"></div>
+<section id="download">
+
+  <div class="dl-center">
+    <div class="dl-hero-eyebrow">Early Access · VR Crafting RPG</div>
+    <h2 class="dl-hero-title">Download the Launcher</h2>
+    <p class="dl-hero-sub">The forge awaits — install the Ironveil Launcher to receive game builds, updates, and announcements directly.</p>
+
+    <div class="os-strip" id="dl-os-strip">
+      <button class="os-btn" id="dl-btn-win" onclick="downloadLauncher('windows')">
+        <span class="os-icon">🪟</span>
+        <span class="os-label">WINDOWS</span>
+        <span class="os-ver" id="dl-win-ver">v1.0.0 · Windows 10/11 · 64-bit</span>
+      </button>
+      <button class="os-btn" id="dl-btn-mac" onclick="downloadLauncher('mac')" disabled style="opacity:.45;cursor:not-allowed" title="macOS build coming soon">
+        <span class="os-icon">🍎</span>
+        <span class="os-label">macOS</span>
+        <span class="os-ver">Coming Soon</span>
+      </button>
+    </div>
+
+    <div class="reqs-strip">
+      <div class="req-item">Windows 10 / macOS 12+</div>
+      <div class="req-item">VR: Meta Quest 2/3 or PCVR</div>
+      <div class="req-item">4 GB RAM minimum</div>
+      <div class="req-item">2 GB free disk space</div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="section-header" style="margin-bottom:20px">
+    <h2 class="section-title">How It Works</h2>
+    <div class="section-rule"></div>
+  </div>
+
+  <div class="dl-steps">
+    <div class="dl-step-card">
+      <span class="dl-step-num">1</span>
+      <span class="dl-step-icon">⬇</span>
+      <div class="dl-step-title">Download the Launcher</div>
+      <p class="dl-step-body">Click your platform above to download the Ironveil Launcher installer. Run it once to install — no configuration needed.</p>
+    </div>
+    <div class="dl-step-card">
+      <span class="dl-step-num">2</span>
+      <span class="dl-step-icon">⚒</span>
+      <div class="dl-step-title">Sign In to the Forge</div>
+      <p class="dl-step-body">Open the launcher and sign in with your Ironveil account. If you don't have one, create it here — access is granted by the dev team when a playtest slot opens.</p>
+    </div>
+    <div class="dl-step-card">
+      <span class="dl-step-num">3</span>
+      <span class="dl-step-icon">▶</span>
+      <div class="dl-step-title">Install & Play</div>
+      <p class="dl-step-body">Once access is granted, the launcher shows an Install button. It downloads the latest build automatically, then lets you launch straight into the game.</p>
+    </div>
+  </div>
+
+  <!-- Game builds — shown when signed in + has access -->
+  <div id="dl-game-section" class="hidden">
+    <div class="section-header" style="margin-bottom:20px">
+      <h2 class="section-title">Game Builds</h2>
+      <div class="section-rule"></div>
+    </div>
+    <div class="release-card">
+      <div class="release-head">
+        <span class="release-title">AVAILABLE BUILDS</span>
+        <span class="release-badge" id="dl-build-count">Loading…</span>
+      </div>
+      <div class="release-body">
+        <div class="release-row header">
+          <div>Build</div><div>Version</div><div>Released</div><div>Download</div>
+        </div>
+        <div id="dl-builds-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Not signed in -->
+  <div id="dl-auth-wall">
+    <div class="section-header" style="margin-bottom:20px">
+      <h2 class="section-title">Game Builds</h2>
+      <div class="section-rule"></div>
+    </div>
+    <div class="dl-auth-wall">
+      <span class="lock">🔒</span>
+      <div class="dl-auth-wall-title">Sign In to Access Game Builds</div>
+      <p>Game builds are only available to authorised playtesters. Sign in to check your access status.</p>
+      <button class="btn-dl-primary" onclick="openAuth()">⬡ Sign In to the Forge</button>
+    </div>
+  </div>
+
+  <!-- Signed in but no access -->
+  <div id="dl-no-access-wall" class="hidden">
+    <div class="section-header" style="margin-bottom:20px">
+      <h2 class="section-title">Game Builds</h2>
+      <div class="section-rule"></div>
+    </div>
+    <div class="dl-auth-wall">
+      <span class="lock">⏳</span>
+      <div class="dl-auth-wall-title">Access Pending</div>
+      <p>Your account is registered, but playtest access hasn't been granted yet. A developer will open the gates when a slot becomes available.</p>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="section-header" style="margin-bottom:20px;margin-top:48px">
+    <h2 class="section-title">Questions</h2>
+    <div class="section-rule"></div>
+  </div>
+
+  <div class="dl-faq-list">
+    <div class="dl-faq-item">
+      <button class="dl-faq-q" onclick="toggleDlFaq(this)">
+        Do I need a VR headset to play? <span class="dl-faq-arrow">▸</span>
+      </button>
+      <div class="dl-faq-a">During the current alpha, a VR headset is required. Meta Quest 2 and Meta Quest 3 are officially supported, along with PCVR via Steam Link.</div>
+    </div>
+    <div class="dl-faq-item">
+      <button class="dl-faq-q" onclick="toggleDlFaq(this)">
+        How do I get a playtest invite? <span class="dl-faq-arrow">▸</span>
+      </button>
+      <div class="dl-faq-a">Create an account and a developer will review it and grant access manually. The team is small, so spots open in waves — watch the Development Scrolls for announcements.</div>
+    </div>
+    <div class="dl-faq-item">
+      <button class="dl-faq-q" onclick="toggleDlFaq(this)">
+        Will the launcher auto-update the game? <span class="dl-faq-arrow">▸</span>
+      </button>
+      <div class="dl-faq-a">Yes. When a new build is released, the launcher shows an Update button and downloads it automatically.</div>
+    </div>
+    <div class="dl-faq-item">
+      <button class="dl-faq-q" onclick="toggleDlFaq(this)">
+        Is my data safe? <span class="dl-faq-arrow">▸</span>
+      </button>
+      <div class="dl-faq-a">Accounts are secured through Supabase Auth. The launcher stores a session token locally — your password is never saved. Game downloads are authenticated against your account so builds can't be shared.</div>
+    </div>
+  </div>
+
+</section>
 
 <!-- ─── FOOTER ──────────────────────────────────────────────── -->
 <footer>
@@ -1020,6 +1399,9 @@ async function initAuth() {
     profile = data;
     renderHeader();
     closeAuth();
+    initDownloadSection();
+  } else {
+    initDownloadSection(); // show sign-in wall for logged-out state
   }
 
   sb.auth.onAuthStateChange(async (event, session) => {
@@ -1027,12 +1409,14 @@ async function initAuth() {
       user = null;
       profile = null;
       renderHeader();
+      initDownloadSection();
     } else if (event === 'SIGNED_IN' && !user) {
       user = session.user;
       const { data } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
       profile = data;
       renderHeader();
       closeAuth();
+      initDownloadSection();
     }
   });
 }
@@ -1432,6 +1816,110 @@ function createRain() {
 
 // Initialize rain on load
 window.onload = createRain;
+
+// ══ DOWNLOAD SECTION ══════════════════════════════════════════
+const LAUNCHER_RELEASES = {
+  windows: {
+    url: 'https://github.com/FullStack-Beck/IronveilLauncher/releases/latest/download/IronveilLauncherSetup.exe',
+    ver: 'v1.0.0 · Windows 10/11 · 64-bit'
+  }
+};
+
+const DL_ACCESS_ROLES = ['developer', 'admin', 'tester'];
+
+let dlGithubToken = null;
+const GITHUB_OWNER = 'FullStack-Beck';
+const GITHUB_REPO  = 'IronveilLauncher';
+
+// Called after auth state is known — wire up the download section
+async function initDownloadSection() {
+  // OS highlight
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes('windows')) document.getElementById('dl-btn-win')?.classList.add('recommended');
+
+  const hasAccess = user && profile && DL_ACCESS_ROLES.includes(profile.role);
+
+  document.getElementById('dl-auth-wall').classList.toggle('hidden', !!user);
+  document.getElementById('dl-no-access-wall').classList.toggle('hidden', !user || hasAccess);
+  document.getElementById('dl-game-section').classList.toggle('hidden', !hasAccess);
+
+  if (hasAccess) {
+    await loadDlGithubToken();
+    await loadDlGameBuilds();
+  }
+}
+
+async function loadDlGithubToken() {
+  try {
+    const { data } = await sb.from('launcher_config').select('token').eq('id', 'github').maybeSingle();
+    if (data) dlGithubToken = data.token;
+  } catch {}
+}
+
+function downloadLauncher(os) {
+  const rel = LAUNCHER_RELEASES[os];
+  if (!rel?.url) { showToast('Launcher download not available yet.', true); return; }
+  showToast(`Downloading ${os === 'windows' ? 'Windows' : 'macOS'} launcher…`);
+  window.location.href = rel.url;
+}
+
+async function loadDlGameBuilds() {
+  const list = document.getElementById('dl-builds-list');
+  list.innerHTML = `<div style="font-style:italic;color:var(--ink4);padding:12px 0">Loading builds from the forge…</div>`;
+
+  if (!dlGithubToken) {
+    list.innerHTML = `<div style="font-style:italic;color:var(--ink4);padding:12px 0">No builds available yet.</div>`;
+    document.getElementById('dl-build-count').textContent = '0 Builds';
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`, {
+      headers: {
+        'Authorization': `Bearer ${dlGithubToken}`,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
+    if (!res.ok) throw new Error(`GitHub API: ${res.status}`);
+    const releases = await res.json();
+    document.getElementById('dl-build-count').textContent = `${releases.length} Build${releases.length !== 1 ? 's' : ''}`;
+    renderDlBuilds(releases);
+  } catch {
+    list.innerHTML = `<div style="font-style:italic;color:var(--ink4);padding:12px 0">Could not load builds — try again later.</div>`;
+  }
+}
+
+function renderDlBuilds(releases) {
+  const list = document.getElementById('dl-builds-list');
+  if (!releases.length) {
+    list.innerHTML = `<div style="font-style:italic;color:var(--ink4);padding:12px 0">No builds released yet — watch the Scrolls.</div>`;
+    return;
+  }
+  list.innerHTML = releases.map(r => {
+    const date = new Date(r.published_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    const winAsset = r.assets?.find(a => a.name.toLowerCase().endsWith('.exe'));
+    const macAsset = r.assets?.find(a => a.name.toLowerCase().endsWith('.dmg'));
+    const makeBtn = (asset, label) => asset
+      ? `<a class="btn-dl" href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/${r.tag_name}/${asset.name}"><span>⬇</span> ${label}</a>`
+      : '';
+    return `
+      <div class="release-row">
+        <div>
+          <div class="release-name">${r.name || r.tag_name}</div>
+          <div style="font-size:13px;color:var(--ink4);margin-top:2px;font-style:italic">${r.body?.split('\n')[0] || ''}</div>
+        </div>
+        <div class="release-ver">${r.tag_name}</div>
+        <div class="release-date">${date}</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${makeBtn(winAsset, 'Windows') || makeBtn(macAsset, 'macOS') || '<span style="font-style:italic;color:var(--ink4);font-size:13px">No assets</span>'}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleDlFaq(btn) { btn.closest('.dl-faq-item').classList.toggle('open'); }
+
 
 </script>
 </body>
