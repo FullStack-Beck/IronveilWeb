@@ -1858,8 +1858,7 @@ async function loadDlGithubToken() {
 
 function downloadLauncher(os) {
   const rel = LAUNCHER_RELEASES[os];
-  if (!rel?.url) { showToast('Launcher download not available yet.', true); return; }
-  showToast(`Downloading ${os === 'windows' ? 'Windows' : 'macOS'} launcher…`);
+  if (!rel?.url) { alert('Launcher download not available yet.'); return; }
   window.location.href = rel.url;
 }
 
