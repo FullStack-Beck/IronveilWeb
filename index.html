@@ -1023,6 +1023,9 @@ footer::before {
   .reqs-strip { flex-direction: column; align-items: center; gap: 10px; }
 }
 
+.hidden { display: none !important; }
+
+
 #support {
   padding: 80px 40px;
   max-width: 1000px;
@@ -1842,7 +1845,7 @@ window.onload = createRain;
 // ══ DOWNLOAD SECTION ══════════════════════════════════════════
 const LAUNCHER_RELEASES = {
   windows: {
-    url: 'https://github.com/FullStack-Beck/IronveilLauncher/releases/latest/download/IronveilLauncherSetup.exe',
+    url: 'https://github.com/FullStack-Beck/IronveilLauncher/releases/latest/download/IronveilSetup.exe',
     ver: 'v1.0.0 · Windows 10/11 · 64-bit'
   }
 };
@@ -1880,8 +1883,7 @@ async function loadDlGithubToken() {
 
 function downloadLauncher(os) {
   const rel = LAUNCHER_RELEASES[os];
-  if (!rel?.url) { showToast('Launcher download not available yet.', true); return; }
-  showToast(`Downloading ${os === 'windows' ? 'Windows' : 'macOS'} launcher…`);
+  if (!rel?.url) { alert('Launcher download not available yet.'); return; }
   window.location.href = rel.url;
 }
 
