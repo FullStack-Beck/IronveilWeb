@@ -455,7 +455,6 @@ async function startCheckout() {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_KEY}`,  // add this line
        },
       body: JSON.stringify({ user_id: user.id, price_id: selectedPriceId }),
     });
@@ -485,7 +484,6 @@ async function openPortal() {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_KEY}`,  // add this line
       },
       body: JSON.stringify({ user_id: user.id }),
     });
