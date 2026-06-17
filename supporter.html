@@ -453,7 +453,10 @@ async function startCheckout() {
   try {
     const res = await fetch(`${EDGE_BASE}/create-checkout-session`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_KEY}`,  // add this line
+       },
       body: JSON.stringify({ user_id: user.id, price_id: selectedPriceId }),
     });
     const { url, error } = await res.json();
@@ -480,7 +483,10 @@ async function openPortal() {
   try {
     const res = await fetch(`${EDGE_BASE}/create-portal-session`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_KEY}`,  // add this line
+      },
       body: JSON.stringify({ user_id: user.id }),
     });
     const { url, error } = await res.json();
