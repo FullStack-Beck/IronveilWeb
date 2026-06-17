@@ -391,20 +391,32 @@ let selectedPriceId = 'price_1Tj9DfEdRU4MuDXKP0iLryee'; // default monthly
     await handleDiscordCallback(oauthCode, oauthState);
 
     // Clean URL
-    window.history.replaceState({}, '', '/supporter.html');
+    window.history.replaceState(
+      {},
+      '',
+      window.location.pathname
+    );
   }
 
   // Handle Stripe return redirects
   const params = new URLSearchParams(window.location.search);
   if (params.get('success') === 'true') {
     showMsg('⚒ Payment successful — welcome to the guild! Your perks will activate within a moment.', false);
-    window.history.replaceState({}, '', '/supporter.html');
+    window.history.replaceState(
+      {},
+      '',
+      window.location.pathname
+    );
     // Refresh profile to pick up webhook-updated fields
     if (user) await refreshProfile();
   }
   if (params.get('canceled') === 'true') {
     showMsg('Checkout was cancelled — no charge was made.', true);
-    window.history.replaceState({}, '', '/supporter.html');
+    window.history.replaceState(
+      {},
+      '',
+      window.location.pathname
+    );
   }
 })();
 
