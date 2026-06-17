@@ -1305,6 +1305,7 @@ hr.rune-divider::after {
                   <th>Name</th>
                   <th>Title</th>
                   <th>Role</th>
+                  <th>Supporter</th>
                   <th>Visibility</th>
                   <th>Joined</th>
                   <th>Actions</th>
@@ -1439,6 +1440,33 @@ hr.rune-divider::after {
       </div>
       <div class="field"><label>Bio</label>
         <textarea id="mm-bio" rows="3"></textarea>
+      </div>
+      <hr class="rune-divider">
+      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold);letter-spacing:.1em;margin-bottom:12px">⚒ Supporter Status</div>
+      <div class="two-col">
+        <div class="field"><label>Is Supporter</label>
+          <select id="mm-is-supporter">
+            <option value="false">No</option>
+            <option value="true">Yes — Active Supporter</option>
+          </select>
+        </div>
+        <div class="field"><label>Memorial Consent</label>
+          <select id="mm-memorial-consent">
+            <option value="true">Yes — Show on Wall</option>
+            <option value="false">No — Hidden</option>
+          </select>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label>Supporter Since</label>
+          <input type="date" id="mm-supporter-since">
+        </div>
+        <div class="field"><label>Access Expires</label>
+          <input type="date" id="mm-supporter-expires">
+        </div>
+      </div>
+      <div class="field"><label>Discord ID</label>
+        <input type="text" id="mm-discord-id" placeholder="17–20 digit Discord user ID">
       </div>
     </div>
     <div class="modal-footer">
@@ -2175,6 +2203,7 @@ async function renderMembersPage() {
       <td>${m.is_public ? '<span class="badge pub">PUBLIC</span>' : '<span class="badge hidden">HIDDEN</span>'}</td>
       <td style="font-size:13px;color:var(--ink4)">${m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}</td>
       <td><button class="btn sm secondary" onclick="openMemberModal('${m.id}')"><span>✎ Edit</span></button></td>
+      <td>${m.is_supporter ? '<span class="badge done">⚒ SUPPORTER</span>' : '—'}</td>
     </tr>
   `).join('');
 }
@@ -2191,6 +2220,11 @@ function openMemberModal(memberId) {
     document.getElementById('mm-bio').value       = m.bio || '';
     document.getElementById('mm-title').textContent = `Edit: ${m.display_name || 'Member'}`;
     document.getElementById('member-modal-overlay').classList.add('open');
+    document.getElementById('mm-is-supporter').value    = m.is_supporter ? 'true' : 'false';
+    document.getElementById('mm-memorial-consent').value = m.memorial_consent === false ? 'false' : 'true';
+    document.getElementById('mm-supporter-since').value  = m.supporter_since ? m.supporter_since.slice(0,10) : '';
+    document.getElementById('mm-supporter-expires').value = m.supporter_expires ? m.supporter_expires.slice(0,10) : '';
+    document.getElementById('mm-discord-id').value       = m.discord_id || '';
   });
 }
 
@@ -2202,7 +2236,12 @@ async function saveMember() {
     role:         document.getElementById('mm-role').value,
     is_public:    document.getElementById('mm-public').value === 'true',
     bio:          document.getElementById('mm-bio').value.trim(),
-    updated_at:   new Date().toISOString()
+    updated_at:   new Date().toISOString(),
+    is_supporter:      document.getElementById('mm-is-supporter').value === 'true',
+    memorial_consent:  document.getElementById('mm-memorial-consent').value === 'true',
+    supporter_since:   document.getElementById('mm-supporter-since').value   || null,
+    supporter_expires: document.getElementById('mm-supporter-expires').value || null,
+    discord_id:        document.getElementById('mm-discord-id').value.trim() || null,
   };
   const { error } = await sb.from('profiles').update(payload).eq('id', id);
   if (error) { toast('Error: ' + error.message, true); return; }
