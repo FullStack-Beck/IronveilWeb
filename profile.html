@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ironveil — Player Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN TOKENS — Ironveil (Parchment / Forge theme)
+═══════════════════════════════════════════════════════════════ */
+:root {
+  --parch:     #f0e8d0;
+  --parch2:    #e8dcc0;
+  --parch3:    #ddd0b0;
+  --parch4:    #cfc098;
+  --ink:       #1e160c;
+  --ink2:      #3a2a18;
+  --ink3:      #5a4030;
+  --ink4:      #8a6a50;
+  --ink5:      #b09070;
+  --gold:      #8b6914;
+  --gold2:     #c8960a;
+  --gold3:     #e8b820;
+  --ember:     #8b2a10;
+  --ember2:    #c04020;
+  --teal:      #1e5a4a;
+  --teal2:     #2a8060;
+  --border:    rgba(139,105,20,.25);
+  --border2:   rgba(139,105,20,.45);
+  --border3:   rgba(139,105,20,.7);
+  --shadow:    rgba(30,22,12,.18);
+  --shadow2:   rgba(30,22,12,.35);
+  --mono:      'JetBrains Mono', monospace;
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; }
+
+body {
+  background: var(--parch2);
+  background-image:
+    var(--noise),
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgba(139,105,20,.06), transparent 60%),
+    radial-gradient(ellipse 80% 60% at 80% 100%, rgba(139,50,16,.04), transparent 50%);
+  color: var(--ink);
+  font-family: 'Crimson Pro', serif;
+  font-size: 17px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--parch3); }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+
+/* ═══════════════════════════════════════════════════════════
+   AUTH SCREEN
+═══════════════════════════════════════════════════════════ */
+#auth-screen {
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  position:relative;
+}
+
+#auth-screen::before, #auth-screen::after {
+  content: '⚒';
+  position:absolute;
+  font-size:80px;
+  color:rgba(139,105,20,.06);
+  font-family:'Cinzel',serif;
+  pointer-events:none;
+}
+#auth-screen::before { top:40px; left:60px; }
+#auth-screen::after  { bottom:40px; right:60px; transform:rotate(180deg); }
+
+.auth-box {
+  width:420px;
+  background:var(--parch);
+  border:2px solid var(--border3);
+  box-shadow: 0 0 0 6px rgba(139,105,20,.06), 0 8px 40px var(--shadow2), inset 0 0 60px rgba(139,105,20,.04);
+  padding:48px 44px 40px;
+  position:relative;
+}
+
+.auth-box::before {
+  content:'';
+  position:absolute;
+  top:-1px; left:0; right:0;
+  height:3px;
+  background: repeating-linear-gradient(90deg,transparent 0,transparent 8px,var(--border3) 8px,var(--border3) 10px,transparent 10px,transparent 20px);
+  opacity:.5;
+}
+
+.auth-seal { text-align:center; margin-bottom:8px; }
+.auth-seal .icon { font-size:36px; display:block; margin-bottom:8px; color:var(--gold); text-shadow:0 2px 8px rgba(139,105,20,.3); }
+
+.auth-title {
+  font-family:'Cinzel Decorative',serif;
+  font-size:20px;
+  color:var(--gold);
+  letter-spacing:.04em;
+  text-align:center;
+  line-height:1.2;
+}
+
+.auth-sub {
+  font-family:'Cinzel',serif;
+  font-size:11px;
+  letter-spacing:.18em;
+  color:var(--ink4);
+  text-align:center;
+  margin-bottom:32px;
+  margin-top:4px;
+}
+
+.auth-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:24px; }
+
+.auth-tab {
+  flex:1; padding:9px; background:none; border:none;
+  font-family:'Cinzel',serif; font-size:11px; letter-spacing:.12em; color:var(--ink4);
+  cursor:pointer; border-bottom:2px solid transparent; transition:color .2s,border-color .2s; margin-bottom:-1px;
+}
+.auth-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+
+.field { margin-bottom:18px; }
+.field label { display:block; font-family:'Cinzel',serif; font-size:10px; letter-spacing:.16em; color:var(--ink4); margin-bottom:7px; }
+
+.field input, .field textarea, .field select {
+  width:100%;
+  background:rgba(255,255,255,.5);
+  border:1px solid var(--border2);
+  color:var(--ink);
+  padding:10px 13px;
+  font-family:'Crimson Pro',serif;
+  font-size:16px;
+  outline:none;
+  transition:border-color .2s,background .2s;
+  resize:vertical;
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+  border-color:var(--gold2);
+  background:rgba(255,255,255,.75);
+}
+.field select option { background:var(--parch); color:var(--ink); }
+
+/* ─── BUTTONS ────────────────────────────────────────────── */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  gap:8px; padding:10px 20px;
+  border:1px solid var(--border3);
+  background:transparent; color:var(--gold); cursor:pointer;
+  font-family:'Cinzel',serif; font-size:11px; letter-spacing:.12em;
+  transition:background .2s,color .2s,border-color .2s,box-shadow .2s;
+  position:relative; overflow:hidden;
+}
+.btn::before { content:''; position:absolute; inset:0; background:var(--gold); opacity:0; transition:opacity .2s; }
+.btn:hover::before { opacity:1; }
+.btn:hover { color:var(--parch); box-shadow:0 2px 12px rgba(139,105,20,.25); }
+.btn span { position:relative; z-index:1; }
+.btn.full { width:100%; }
+.btn.secondary { border-color:var(--border); color:var(--ink3); }
+.btn.secondary::before { background:var(--parch3); }
+.btn.secondary:hover { color:var(--ink); }
+.btn.danger { border-color:rgba(139,42,16,.4); color:var(--ember); }
+.btn.danger::before { background:var(--ember); }
+.btn.danger:hover { color:var(--parch); }
+.btn.success { border-color:rgba(30,90,74,.4); color:var(--teal); }
+.btn.success::before { background:var(--teal); }
+.btn.success:hover { color:var(--parch); }
+.btn.sm { padding:5px 12px; font-size:10px; }
+.btn:disabled { opacity:.45; cursor:not-allowed; pointer-events:none; }
+
+.auth-error { color:var(--ember); font-family:'Cinzel',serif; font-size:11px; letter-spacing:.06em; text-align:center; margin-top:12px; min-height:18px; }
+.auth-success { color:var(--teal2); font-family:'Cinzel',serif; font-size:11px; letter-spacing:.06em; text-align:center; margin-top:12px; }
+
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD LAYOUT
+═══════════════════════════════════════════════════════════ */
+#dashboard { display:none; flex:1; flex-direction:row; min-height:100vh; }
+
+.sidebar {
+  width:230px;
+  background:var(--ink2);
+  background-image: var(--noise), linear-gradient(180deg,rgba(139,105,20,.08) 0%,transparent 40%);
+  border-right:2px solid rgba(139,105,20,.3);
+  display:flex; flex-direction:column; flex-shrink:0;
+  position:fixed; top:0; left:0; bottom:0;
+  z-index:100; overflow-y:auto;
+}
+
+.sidebar-brand { padding:24px 20px 20px; border-bottom:1px solid rgba(139,105,20,.2); text-align:center; }
+.brand-icon { font-size:28px; display:block; margin-bottom:6px; color:var(--gold2); text-shadow:0 0 20px rgba(200,150,10,.4); }
+.brand-name { font-family:'Cinzel Decorative',serif; font-size:13px; color:var(--gold2); letter-spacing:.08em; line-height:1.3; }
+.brand-tag { font-family:'Cinzel',serif; font-size:9px; letter-spacing:.2em; color:rgba(139,105,20,.6); margin-top:3px; }
+
+nav.sidebar-nav { flex:1; padding:12px 0; display:flex; flex-direction:column; }
+
+.nav-section { font-family:'Cinzel',serif; font-size:9px; letter-spacing:.2em; color:rgba(139,105,20,.4); padding:14px 18px 6px; }
+
+.nav-item {
+  display:flex; align-items:center; gap:11px; padding:11px 18px;
+  color:rgba(176,144,112,.75);
+  font-family:'Cinzel',serif; font-size:11px; letter-spacing:.1em;
+  cursor:pointer; transition:all .2s;
+  border:none; background:none; width:100%; text-align:left; position:relative;
+}
+.nav-item::before {
+  content:''; position:absolute; left:0; top:0; bottom:0;
+  width:2px; background:var(--gold2); opacity:0; transition:opacity .2s;
+}
+.nav-item:hover   { color:rgba(232,184,32,.9); background:rgba(139,105,20,.08); }
+.nav-item.active  { color:var(--gold2); background:rgba(139,105,20,.14); }
+.nav-item.active::before { opacity:1; }
+.nav-icon { font-size:14px; width:16px; text-align:center; flex-shrink:0; }
+
+.sidebar-footer { padding:16px 18px; border-top:1px solid rgba(139,105,20,.2); }
+
+.user-chip {
+  display:flex; align-items:center; gap:10px; margin-bottom:12px;
+  padding:8px 10px; background:rgba(139,105,20,.1); border:1px solid rgba(139,105,20,.2);
+}
+.user-avatar {
+  width:30px; height:30px; background:rgba(139,105,20,.2); border:1px solid rgba(139,105,20,.35);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Cinzel',serif; font-size:12px; color:var(--gold2); flex-shrink:0;
+}
+.user-info .user-name { font-family:'Cinzel',serif; font-size:11px; color:rgba(232,184,32,.85); max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.user-info .user-role { font-family:'Cinzel',serif; font-size:9px; letter-spacing:.1em; color:rgba(139,105,20,.6); margin-top:2px; }
+
+.main-area { margin-left:230px; flex:1; overflow-y:auto; min-height:100vh; display:flex; flex-direction:column; }
+
+.topbar {
+  padding:16px 36px; border-bottom:1px solid var(--border);
+  background:rgba(240,232,208,.92); backdrop-filter:blur(8px);
+  position:sticky; top:0; z-index:50;
+  display:flex; justify-content:space-between; align-items:center;
+  background-image:var(--noise);
+}
+.page-title { font-family:'Cinzel',serif; color:var(--gold); font-size:20px; letter-spacing:.08em; }
+.topbar-date { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.1em; color:var(--ink4); }
+
+.content { padding:32px 36px; flex:1; }
+
+/* ─── PANELS ─────────────────────────────────────── */
+.panel {
+  background:var(--parch); border:1px solid var(--border2);
+  box-shadow:0 2px 16px var(--shadow); margin-bottom:24px;
+  background-image:var(--noise); position:relative;
+}
+.panel::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold3),var(--gold2),transparent); opacity:.4;
+}
+.panel-header {
+  padding:15px 22px; border-bottom:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+  background:rgba(139,105,20,.04);
+}
+.panel-title { font-family:'Cinzel',serif; font-size:14px; color:var(--gold); letter-spacing:.1em; }
+.panel-body { padding:22px; }
+
+/* ─── GRID ───────────────────────────────────────── */
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+
+/* ─── PAGES ──────────────────────────────────────── */
+.page { display:none; }
+.page.active { display:block; }
+
+/* ─── TOAST ──────────────────────────────────────── */
+.toast {
+  position:fixed; bottom:24px; right:24px;
+  background:var(--ink2); background-image:var(--noise);
+  border:1px solid rgba(139,105,20,.4);
+  padding:13px 20px; font-family:'Cinzel',serif; font-size:12px; color:var(--gold2); letter-spacing:.08em;
+  z-index:9999; opacity:0; transform:translateY(8px);
+  transition:opacity .3s,transform .3s; pointer-events:none;
+  box-shadow:0 4px 20px rgba(30,22,12,.4);
+}
+.toast.show { opacity:1; transform:translateY(0); }
+
+/* ─── DIVIDER ─────────────────────────────────────── */
+hr.rune-divider {
+  border:none; height:1px;
+  background:linear-gradient(90deg,transparent,var(--border2),transparent);
+  margin:20px 0; position:relative;
+}
+hr.rune-divider::after {
+  content:'⚔'; position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%); background:var(--parch);
+  padding:0 10px; font-size:12px; color:var(--border2);
+}
+
+/* ─── BADGES ─────────────────────────────────────── */
+.badge {
+  display:inline-block; padding:2px 9px;
+  font-family:'Cinzel',serif; font-size:9px; letter-spacing:.12em;
+}
+.badge.done   { border:1px solid var(--teal);  color:var(--teal); }
+.badge.wip    { border:1px solid var(--gold2); color:var(--gold2); }
+.badge.pending{ border:1px solid var(--ink4);  color:var(--ink4); }
+.badge.linked { border:1px solid var(--teal2); color:var(--teal2); }
+.badge.wip-badge { border:1px solid rgba(139,105,20,.4); color:var(--ink4); font-size:8px; padding:1px 6px; }
+
+/* ─── STAT CARDS ─────────────────────────────────── */
+.stat-card {
+  background:var(--parch); border:1px solid var(--border2);
+  padding:22px 24px; box-shadow:0 2px 12px var(--shadow);
+  background-image:var(--noise); position:relative; overflow:hidden;
+}
+.stat-card::after {
+  content:''; position:absolute; bottom:0; right:0; width:60px; height:60px;
+  border-top:1px solid var(--border); border-left:1px solid var(--border); opacity:.5;
+}
+.stat-card .value { font-family:'Cinzel Decorative',serif; font-size:36px; color:var(--gold); line-height:1; margin-bottom:6px; text-shadow:0 2px 8px rgba(139,105,20,.2); }
+.stat-card .label { font-family:'Cinzel',serif; font-size:10px; letter-spacing:.14em; color:var(--ink4); }
+
+/* ─── FRIENDS LIST ───────────────────────────────── */
+.friend-row {
+  display:flex; align-items:center; gap:14px;
+  padding:14px 0; border-bottom:1px solid rgba(139,105,20,.08);
+}
+.friend-row:last-child { border-bottom:none; }
+
+.friend-avatar {
+  width:38px; height:38px;
+  background:rgba(139,105,20,.15); border:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Cinzel',serif; font-size:14px; color:var(--gold); flex-shrink:0;
+}
+
+.friend-info { flex:1; }
+.friend-name { font-family:'Cinzel',serif; font-size:13px; color:var(--gold); letter-spacing:.06em; }
+.friend-meta { font-size:13px; color:var(--ink4); margin-top:2px; }
+
+.friend-actions { display:flex; gap:6px; }
+
+.empty-state { padding:36px; text-align:center; color:var(--ink4); font-style:italic; font-size:15px; }
+
+/* ─── SETTINGS SECTIONS ──────────────────────────── */
+.settings-section { margin-bottom:28px; }
+.settings-label {
+  font-family:'Cinzel',serif; font-size:10px; letter-spacing:.18em; color:var(--gold);
+  margin-bottom:14px; display:flex; align-items:center; gap:8px;
+}
+.settings-label .wip-badge { font-size:8px; padding:1px 6px; border:1px solid rgba(139,105,20,.4); color:var(--ink4); }
+
+.input-row { display:flex; gap:10px; align-items:flex-end; }
+.input-row .field { flex:1; margin-bottom:0; }
+
+/* ─── BILLING ────────────────────────────────────── */
+.billing-status-card {
+  background:var(--parch); border:1px solid var(--border2);
+  padding:28px; display:flex; align-items:center; gap:22px;
+  margin-bottom:24px; box-shadow:0 2px 12px var(--shadow);
+  background-image:var(--noise); position:relative;
+}
+.billing-status-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold3),var(--gold2),transparent); opacity:.4;
+}
+.billing-icon { font-size:36px; flex-shrink:0; }
+.billing-info .billing-plan { font-family:'Cinzel',serif; font-size:18px; color:var(--gold); letter-spacing:.06em; }
+.billing-info .billing-detail { font-size:15px; color:var(--ink3); margin-top:4px; }
+
+/* ─── DISCORD CARD ───────────────────────────────── */
+.link-card {
+  background:var(--parch); border:1px solid var(--border2);
+  padding:28px; display:flex; align-items:center; gap:22px;
+  box-shadow:0 2px 12px var(--shadow); background-image:var(--noise); position:relative;
+  margin-bottom:20px;
+}
+.link-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold3),var(--gold2),transparent); opacity:.4;
+}
+.link-logo {
+  width:52px; height:52px; border:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:26px; flex-shrink:0; background:rgba(139,105,20,.06);
+}
+.link-info { flex:1; }
+.link-name { font-family:'Cinzel',serif; font-size:16px; color:var(--gold); letter-spacing:.06em; }
+.link-desc { font-size:15px; color:var(--ink3); margin-top:3px; }
+.link-status { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.1em; margin-top:6px; color:var(--ink4); }
+
+/* ─── MODAL ──────────────────────────────────────── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(30,22,12,.7); backdrop-filter:blur(4px);
+  z-index:500; display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .25s;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+
+.modal-box {
+  background:var(--parch); background-image:var(--noise);
+  border:2px solid var(--border3); box-shadow:0 16px 60px rgba(30,22,12,.5);
+  width:min(480px,95vw); max-height:85vh;
+  display:flex; flex-direction:column; overflow:hidden; position:relative;
+}
+.modal-box::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,transparent,var(--gold3),var(--gold2),transparent);
+}
+.modal-header {
+  padding:20px 24px 16px; border-bottom:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center; flex-shrink:0;
+}
+.modal-title { font-family:'Cinzel',serif; font-size:16px; color:var(--gold); letter-spacing:.08em; }
+.modal-close { background:none; border:none; font-size:18px; color:var(--ink4); cursor:pointer; padding:4px 8px; transition:color .2s; }
+.modal-close:hover { color:var(--ember); }
+.modal-body { padding:24px; overflow-y:auto; flex:1; }
+.modal-footer { padding:16px 24px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; flex-shrink:0; background:rgba(139,105,20,.04); }
+
+.hint-text { font-size:13px; color:var(--ink4); margin-top:8px; font-style:italic; min-height:18px; font-family:'Cinzel',serif; letter-spacing:.04em; }
+.hint-text.ok  { color:var(--teal2); font-style:normal; }
+.hint-text.err { color:var(--ember); font-style:normal; }
+
+@media(max-width:900px) {
+  .sidebar { width:56px; }
+  .brand-name, .brand-tag, .nav-item span, .sidebar-footer .user-info { display:none; }
+  .sidebar-brand { padding:14px 12px; }
+  .nav-item { padding:11px; justify-content:center; }
+  .sidebar-footer .user-chip { justify-content:center; }
+  .user-avatar { margin:0; }
+  .main-area { margin-left:56px; }
+  .content { padding:20px; }
+  .two-col { grid-template-columns:1fr; }
+  .topbar { padding:14px 20px; }
+  .input-row { flex-direction:column; }
+  .billing-status-card, .link-card { flex-direction:column; align-items:flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ AUTH SCREEN ═══════════════ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-seal">
+      <span class="icon">⚒</span>
+      <div class="auth-title">Ironveil</div>
+    </div>
+    <div class="auth-sub">Player Portal</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-in" onclick="switchTab('in')">Sign In</button>
+      <button class="auth-tab"        id="tab-up" onclick="switchTab('up')">Create Account</button>
+    </div>
+
+    <!-- Sign In -->
+    <div id="form-in">
+      <div class="field"><label>Email</label>
+        <input type="email" id="in-email" placeholder="adventurer@forge.world">
+      </div>
+      <div class="field"><label>Password</label>
+        <input type="password" id="in-pass" placeholder="••••••••••">
+      </div>
+      <button class="btn full" onclick="doSignIn()"><span>Enter the Forge</span></button>
+    </div>
+
+    <!-- Sign Up -->
+    <div id="form-up" style="display:none">
+      <div class="field"><label>Username</label>
+        <input type="text" id="up-name" placeholder="Your name in the realm">
+      </div>
+      <div class="field"><label>Email</label>
+        <input type="email" id="up-email" placeholder="adventurer@forge.world">
+      </div>
+      <div class="field"><label>Password</label>
+        <input type="password" id="up-pass" placeholder="At least 6 characters">
+      </div>
+      <button class="btn full" onclick="doSignUp()"><span>Forge Your Legend</span></button>
+    </div>
+
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-success" id="auth-success" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ DASHBOARD ═══════════════ -->
+<div id="dashboard">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="user-chip">
+        <div class="user-avatar" id="sidebar-avatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-name">…</div>
+          <div class="user-role" id="sidebar-role">ADVENTURER</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">Account</div>
+      <button class="nav-item active" id="nav-profile"  onclick="showPage('profile',this)">
+        <span class="nav-icon">◈</span><span>Profile</span>
+      </button>
+      <button class="nav-item" id="nav-friends" onclick="showPage('friends',this)">
+        <span class="nav-icon">⚔</span><span>Friends</span>
+      </button>
+
+      <div class="nav-section">Preferences</div>
+      <button class="nav-item" id="nav-settings" onclick="showPage('settings',this)">
+        <span class="nav-icon">◐</span><span>Settings</span>
+      </button>
+      <button class="nav-item" id="nav-billing" onclick="showPage('billing',this)">
+        <span class="nav-icon">⊞</span><span>Billing</span>
+      </button>
+      <button class="nav-item" id="nav-discord" onclick="showPage('discord',this)">
+        <span class="nav-icon">◉</span><span>Linked Accounts</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn secondary sm" style="width:100%" onclick="logout()">
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-area">
+    <div class="topbar">
+      <div class="page-title" id="page-title">Profile</div>
+      <div class="topbar-date" id="topbar-date">—</div>
+    </div>
+
+    <div class="content">
+
+      <!-- ══════════════════════════════════════
+           PAGE: PROFILE
+      ══════════════════════════════════════ -->
+      <div class="page active" id="page-profile">
+
+        <div class="two-col" style="margin-bottom:24px">
+
+          <!-- Account Info -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Account Information</div>
+            </div>
+            <div class="panel-body">
+              <div style="display:flex;flex-direction:column;gap:14px">
+
+                <div>
+                  <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:.18em;color:var(--ink5);margin-bottom:4px">USERNAME</div>
+                  <div style="font-family:'Cinzel',serif;font-size:17px;color:var(--gold)" id="prof-username">—</div>
+                </div>
+
+                <div>
+                  <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:.18em;color:var(--ink5);margin-bottom:4px">USER ID</div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink3);word-break:break-all" id="prof-userid">—</div>
+                </div>
+
+                <div>
+                  <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:.18em;color:var(--ink5);margin-bottom:4px">EMAIL</div>
+                  <div style="font-size:16px;color:var(--ink2)" id="prof-email">—</div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Player Stats -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Player Statistics</div>
+            </div>
+            <div class="panel-body">
+              <div style="display:flex;flex-direction:column;gap:14px">
+
+                <div>
+                  <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:.18em;color:var(--ink5);margin-bottom:4px">ACCOUNT CREATED</div>
+                  <div style="font-family:'Cinzel',serif;font-size:15px;color:var(--ink2)" id="prof-created">—</div>
+                </div>
+
+                <div>
+                  <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:.18em;color:var(--ink5);margin-bottom:4px">PLAY TIME</div>
+                  <div style="font-family:'Cinzel Decorative',serif;font-size:28px;color:var(--gold);line-height:1" id="prof-playtime">—</div>
+                  <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;color:var(--ink4);margin-top:4px">HOURS IN IRONVEIL</div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div><!-- /page-profile -->
+
+
+      <!-- ══════════════════════════════════════
+           PAGE: FRIENDS
+      ══════════════════════════════════════ -->
+      <div class="page" id="page-friends">
+
+        <!-- Add Friend -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Add a Friend</div>
+          </div>
+          <div class="panel-body">
+            <div class="input-row">
+              <div class="field">
+                <label>Username or User ID</label>
+                <input type="text" id="friend-search-input" placeholder="Enter exact username or ID…">
+              </div>
+              <button class="btn" onclick="sendFriendRequest()" style="flex-shrink:0;height:42px;margin-top:auto">
+                <span>Send Request</span>
+              </button>
+            </div>
+            <div id="friend-search-msg" style="margin-top:8px;font-size:14px;color:var(--ink4)"></div>
+          </div>
+        </div>
+
+        <!-- Pending Requests -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Pending Requests</div>
+            <span id="pending-count" style="font-family:'Cinzel',serif;font-size:10px;color:var(--ink4);letter-spacing:.1em">0 pending</span>
+          </div>
+          <div class="panel-body" id="pending-list">
+            <div class="empty-state">No pending friend requests.</div>
+          </div>
+        </div>
+
+        <!-- Friends List -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Friends</div>
+            <span id="friends-count" style="font-family:'Cinzel',serif;font-size:10px;color:var(--ink4);letter-spacing:.1em">0 friends</span>
+          </div>
+          <div class="panel-body" id="friends-list">
+            <div class="empty-state">Your fellowship is empty. Add some adventurers above.</div>
+          </div>
+        </div>
+
+        <!-- Seen In Game (WIP) -->
+        <div class="panel" style="opacity:.7">
+          <div class="panel-header">
+            <div class="panel-title">Recently Seen In Game <span class="badge wip-badge" style="margin-left:8px">COMING SOON</span></div>
+          </div>
+          <div class="panel-body">
+            <div class="empty-state">Adventurers you have crossed paths with in Ironveil will appear here, with the option to send them a friend request.</div>
+          </div>
+        </div>
+
+      </div><!-- /page-friends -->
+
+
+      <!-- ══════════════════════════════════════
+           PAGE: SETTINGS
+      ══════════════════════════════════════ -->
+      <div class="page" id="page-settings">
+
+        <!-- Change Username -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Change Username</div>
+          </div>
+          <div class="panel-body">
+            <div class="settings-label">Current username: <span id="settings-current-name" style="color:var(--gold)">—</span></div>
+            <div class="input-row" style="margin-bottom:10px">
+              <div class="field">
+                <label>New Username</label>
+                <input type="text" id="new-username-input" placeholder="Choose a new display name">
+              </div>
+            </div>
+            <div class="field">
+              <label>Current Password (required)</label>
+              <input type="password" id="username-current-pass" placeholder="Confirm your identity">
+            </div>
+            <button class="btn" onclick="changeUsername()"><span>Update Username</span></button>
+            <div id="username-msg" class="hint-text"></div>
+          </div>
+        </div>
+
+        <!-- Change Password -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Change Password</div>
+          </div>
+          <div class="panel-body">
+            <div class="field">
+              <label>Current Password</label>
+              <input type="password" id="old-pass-input" placeholder="Your current password">
+            </div>
+            <div class="two-col">
+              <div class="field">
+                <label>New Password</label>
+                <input type="password" id="new-pass-input" placeholder="At least 6 characters">
+              </div>
+              <div class="field">
+                <label>Confirm New Password</label>
+                <input type="password" id="confirm-pass-input" placeholder="Repeat new password">
+              </div>
+            </div>
+            <button class="btn" onclick="changePassword()"><span>Update Password</span></button>
+            <div id="pass-msg" class="hint-text"></div>
+          </div>
+        </div>
+
+        <!-- Change Email (WIP) -->
+        <div class="panel" style="opacity:.72">
+          <div class="panel-header">
+            <div class="panel-title">Change Email <span class="badge wip-badge" style="margin-left:8px">WIP</span></div>
+          </div>
+          <div class="panel-body">
+            <div class="field">
+              <label>New Email Address</label>
+              <input type="email" id="new-email-input" placeholder="new@forge.world" disabled>
+            </div>
+            <div class="field">
+              <label>Current Password (required)</label>
+              <input type="password" id="email-pass-input" placeholder="Confirm your identity" disabled>
+            </div>
+            <button class="btn" disabled><span>Update Email</span></button>
+            <div class="hint-text" style="margin-top:10px">Email change functionality is under construction. Check back soon.</div>
+          </div>
+        </div>
+
+      </div><!-- /page-settings -->
+
+
+      <!-- ══════════════════════════════════════
+           PAGE: BILLING
+      ══════════════════════════════════════ -->
+      <div class="page" id="page-billing">
+
+        <!-- Subscription Status -->
+        <div class="billing-status-card">
+          <div class="billing-icon" id="billing-icon">⚒</div>
+          <div class="billing-info">
+            <div class="billing-plan" id="billing-plan">Free Adventurer</div>
+            <div class="billing-detail" id="billing-detail">Access to the base realm — no active subscription.</div>
+            <div style="margin-top:10px" id="billing-badge-wrap">
+              <span class="badge pending" id="billing-badge">FREE</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subscription Plans -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Subscription Plans</div>
+          </div>
+          <div class="panel-body">
+            <div class="two-col" style="gap:16px">
+
+              <div style="border:1px solid var(--border2);padding:20px;background:rgba(139,105,20,.03);position:relative">
+                <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);letter-spacing:.08em;margin-bottom:8px">Supporter</div>
+                <div style="font-family:'Cinzel Decorative',serif;font-size:26px;color:var(--ink2);margin-bottom:4px">$5 <span style="font-family:'Crimson Pro',serif;font-size:16px;color:var(--ink4)">/month</span></div>
+                <ul style="list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:8px;font-size:15px;color:var(--ink3)">
+                  <li>⚔ Early access to new content</li>
+                  <li>⚔ Supporter badge on profile</li>
+                  <li>⚔ Name on the memorial wall</li>
+                  <li>⚔ Discord supporter role</li>
+                </ul>
+                <button class="btn" style="margin-top:20px;width:100%" onclick="handleSubscribe('supporter')"><span>Become a Supporter</span></button>
+              </div>
+
+              <div style="border:1px solid var(--border2);padding:20px;background:rgba(139,105,20,.03);position:relative">
+                <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);letter-spacing:.08em;margin-bottom:8px">Forgemaster</div>
+                <div style="font-family:'Cinzel Decorative',serif;font-size:26px;color:var(--ink2);margin-bottom:4px">$15 <span style="font-family:'Crimson Pro',serif;font-size:16px;color:var(--ink4)">/month</span></div>
+                <ul style="list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:8px;font-size:15px;color:var(--ink3)">
+                  <li>⚔ Everything in Supporter</li>
+                  <li>⚔ Beta access to unreleased builds</li>
+                  <li>⚔ Direct feedback channel with devs</li>
+                  <li>⚔ Forgemaster badge &amp; title</li>
+                </ul>
+                <button class="btn" style="margin-top:20px;width:100%" onclick="handleSubscribe('forgemaster')"><span>Become a Forgemaster</span></button>
+              </div>
+
+            </div>
+            <div style="margin-top:16px;font-size:14px;color:var(--ink4);font-style:italic;text-align:center">
+              Billing integration coming soon — subscription management will be available at launch.
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Info -->
+        <div class="panel" style="opacity:.7">
+          <div class="panel-header">
+            <div class="panel-title">Payment Information <span class="badge wip-badge" style="margin-left:8px">COMING SOON</span></div>
+          </div>
+          <div class="panel-body">
+            <div class="empty-state">Payment methods and billing history will appear here once billing goes live.</div>
+          </div>
+        </div>
+
+      </div><!-- /page-billing -->
+
+
+      <!-- ══════════════════════════════════════
+           PAGE: LINKED ACCOUNTS
+      ══════════════════════════════════════ -->
+      <div class="page" id="page-discord">
+
+        <div class="link-card">
+          <div class="link-logo">⚡</div>
+          <div class="link-info">
+            <div class="link-name">Discord</div>
+            <div class="link-desc">Link your Discord account to receive role assignments, supporter perks, and community access automatically.</div>
+            <div class="link-status" id="discord-status">Status: Not linked</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0">
+            <button class="btn success" id="discord-link-btn" onclick="linkDiscord()"><span>Link Discord</span></button>
+            <button class="btn danger sm" id="discord-unlink-btn" onclick="unlinkDiscord()" style="display:none"><span>Unlink</span></button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">What Linking Does</div>
+          </div>
+          <div class="panel-body">
+            <div style="display:flex;flex-direction:column;gap:14px;font-size:16px;color:var(--ink2)">
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <span style="color:var(--gold);font-size:18px;flex-shrink:0;margin-top:1px">◈</span>
+                <span>Supporter and Forgemaster subscribers automatically receive their Discord roles.</span>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <span style="color:var(--gold);font-size:18px;flex-shrink:0;margin-top:1px">◈</span>
+                <span>Your in-game name is synced to the community server so other adventurers can find you.</span>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <span style="color:var(--gold);font-size:18px;flex-shrink:0;margin-top:1px">◈</span>
+                <span>Beta announcements and patch notes will be delivered directly to your Discord DMs if opted in.</span>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <span style="color:var(--gold);font-size:18px;flex-shrink:0;margin-top:1px">◈</span>
+                <span>Unlinking removes your Discord roles and disconnects the sync — your Discord account itself is unaffected.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /page-discord -->
+
+    </div><!-- /content -->
+  </div><!-- /main-area -->
+</div><!-- /dashboard -->
+
+<!-- ═══ ADD FRIEND CONFIRM MODAL ═══ -->
+<div class="modal-overlay" id="friend-confirm-modal" onclick="closeFriendModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Send Friend Request</div>
+      <button class="modal-close" onclick="closeFriendModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:14px;color:var(--ink2)">Send a friend request to:</p>
+      <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold);margin-bottom:8px" id="friend-confirm-name">—</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink4)" id="friend-confirm-id">—</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn secondary sm" onclick="closeFriendModal()"><span>Cancel</span></button>
+      <button class="btn sm" onclick="confirmFriendRequest()"><span>Send Request</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   CONFIG — paste your Supabase project URL and anon key here
+═══════════════════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://tzehikqnnzaykyaomzer.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6ZWhpa3FubnpheWt5YW9temVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3OTMxMzMsImV4cCI6MjA5NjM2OTEzM30.Trm5ha1xSr5MvQ-s3AKDdcBncdVCH_xi3CjhVfQaLfo';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════ */
+let currentUser    = null;
+let currentProfile = null;
+let pendingFriendTarget = null; // profile found during friend search
+
+/* ═══════════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════════ */
+async function initAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+    await loadProfile();
+    showDashboard();
+  }
+
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_OUT') {
+      currentUser = null; currentProfile = null;
+      showAuth();
+    } else if (event === 'SIGNED_IN' && !currentUser) {
+      currentUser = session.user;
+      await loadProfile();
+      showDashboard();
+    }
+  });
+}
+
+async function loadProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
+  currentProfile = data;
+}
+
+function showAuth() {
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('dashboard').style.display   = 'none';
+}
+
+function showDashboard() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display   = 'flex';
+
+  const name = currentProfile?.display_name || currentUser?.email?.split('@')[0] || '?';
+  document.getElementById('sidebar-avatar').textContent = name.slice(0,1).toUpperCase();
+  document.getElementById('sidebar-name').textContent   = name;
+  document.getElementById('sidebar-role').textContent   = (currentProfile?.role || 'adventurer').toUpperCase();
+
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  renderProfilePage();
+  renderFriendsPage();
+  renderSettingsPage();
+  renderBillingPage();
+  renderDiscordPage();
+}
+
+async function doSignIn() {
+  clearAuthMessages();
+  const email = document.getElementById('in-email').value.trim();
+  const pass  = document.getElementById('in-pass').value;
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) showAuthError(error.message);
+}
+
+async function doSignUp() {
+  clearAuthMessages();
+  const name  = document.getElementById('up-name').value.trim();
+  const email = document.getElementById('up-email').value.trim();
+  const pass  = document.getElementById('up-pass').value;
+  if (!name) { showAuthError('A username is required.'); return; }
+  const { error } = await sb.auth.signUp({
+    email, password: pass,
+    options: { data: { display_name: name } }
+  });
+  if (error) { showAuthError(error.message); return; }
+  const s = document.getElementById('auth-success');
+  s.textContent = 'Account forged! Check your email to confirm, then sign in.';
+  s.style.display = 'block';
+}
+
+async function logout() { await sb.auth.signOut(); }
+
+function switchTab(t) {
+  document.getElementById('form-in').style.display = t === 'in' ? '' : 'none';
+  document.getElementById('form-up').style.display = t === 'up' ? '' : 'none';
+  document.getElementById('tab-in').classList.toggle('active', t === 'in');
+  document.getElementById('tab-up').classList.toggle('active', t === 'up');
+  clearAuthMessages();
+}
+function clearAuthMessages() {
+  document.getElementById('auth-error').textContent = '';
+  const s = document.getElementById('auth-success');
+  s.textContent = ''; s.style.display = 'none';
+}
+function showAuthError(msg) { document.getElementById('auth-error').textContent = msg; }
+
+/* ═══════════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════════ */
+const pageTitles = {
+  profile:  'Profile',
+  friends:  'Friends',
+  settings: 'Settings',
+  billing:  'Billing',
+  discord:  'Linked Accounts'
+};
+
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  if (btn) btn.classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[id] || id;
+
+  // Refresh page-specific data
+  if (id === 'friends')  renderFriendsPage();
+  if (id === 'settings') renderSettingsPage();
+  if (id === 'billing')  renderBillingPage();
+  if (id === 'discord')  renderDiscordPage();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROFILE PAGE
+═══════════════════════════════════════════════════════════ */
+function renderProfilePage() {
+  const name      = currentProfile?.display_name || currentUser?.email?.split('@')[0] || '—';
+  const userId    = currentUser?.id || '—';
+  const email     = currentUser?.email || '—';
+  const createdAt = currentUser?.created_at
+    ? new Date(currentUser.created_at).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })
+    : '—';
+  // play_time_hours: expects a numeric column on the profiles table
+  const hours     = currentProfile?.play_time_hours != null
+    ? currentProfile.play_time_hours.toLocaleString()
+    : '0';
+
+  document.getElementById('prof-username').textContent = name;
+  document.getElementById('prof-userid').textContent   = userId;
+  document.getElementById('prof-email').textContent    = email;
+  document.getElementById('prof-created').textContent  = createdAt;
+  document.getElementById('prof-playtime').textContent = hours;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FRIENDS PAGE
+   NOTE: Requires a `friendships` table in Supabase with columns:
+     id, requester_id, addressee_id, status ('pending'|'accepted'), created_at
+   And a profiles view/table with: id, display_name
+═══════════════════════════════════════════════════════════ */
+async function renderFriendsPage() {
+  if (!currentUser) return;
+
+  // Fetch all friendship rows involving the current user
+  const { data: rows, error } = await sb
+    .from('friendships')
+    .select('id, requester_id, addressee_id, status, created_at')
+    .or(`requester_id.eq.${currentUser.id},addressee_id.eq.${currentUser.id}`);
+
+  if (error) {
+    // Table may not exist yet — show empty state gracefully
+    document.getElementById('friends-list').innerHTML  = '<div class="empty-state">Friends list unavailable — friendships table not yet configured.</div>';
+    document.getElementById('pending-list').innerHTML  = '<div class="empty-state">—</div>';
+    return;
+  }
+
+  const accepted = (rows || []).filter(r => r.status === 'accepted');
+  const pendingIncoming = (rows || []).filter(r => r.status === 'pending' && r.addressee_id === currentUser.id);
+
+  // Collect all foreign profile IDs we need
+  const allIds = [...new Set([
+    ...accepted.map(r => r.requester_id === currentUser.id ? r.addressee_id : r.requester_id),
+    ...pendingIncoming.map(r => r.requester_id)
+  ])];
+
+  let profileMap = {};
+  if (allIds.length) {
+    const { data: profiles } = await sb.from('profiles').select('id,display_name').in('id', allIds);
+    (profiles || []).forEach(p => { profileMap[p.id] = p; });
+  }
+
+  // Render friends
+  document.getElementById('friends-count').textContent = `${accepted.length} friend${accepted.length !== 1 ? 's' : ''}`;
+  const fl = document.getElementById('friends-list');
+  if (!accepted.length) {
+    fl.innerHTML = '<div class="empty-state">Your fellowship is empty. Add some adventurers above.</div>';
+  } else {
+    fl.innerHTML = accepted.map(r => {
+      const friendId = r.requester_id === currentUser.id ? r.addressee_id : r.requester_id;
+      const p = profileMap[friendId] || {};
+      const initial = (p.display_name || '?').slice(0,1).toUpperCase();
+      return `
+        <div class="friend-row">
+          <div class="friend-avatar">${initial}</div>
+          <div class="friend-info">
+            <div class="friend-name">${p.display_name || '(unknown)'}</div>
+            <div class="friend-meta">Friends since ${new Date(r.created_at).toLocaleDateString()}</div>
+          </div>
+          <div class="friend-actions">
+            <button class="btn danger sm" onclick="removeFriend('${r.id}')"><span>Remove</span></button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Render pending incoming
+  document.getElementById('pending-count').textContent = `${pendingIncoming.length} pending`;
+  const pl = document.getElementById('pending-list');
+  if (!pendingIncoming.length) {
+    pl.innerHTML = '<div class="empty-state">No pending friend requests.</div>';
+  } else {
+    pl.innerHTML = pendingIncoming.map(r => {
+      const p = profileMap[r.requester_id] || {};
+      const initial = (p.display_name || '?').slice(0,1).toUpperCase();
+      return `
+        <div class="friend-row">
+          <div class="friend-avatar">${initial}</div>
+          <div class="friend-info">
+            <div class="friend-name">${p.display_name || '(unknown)'}</div>
+            <div class="friend-meta">Requested ${new Date(r.created_at).toLocaleDateString()}</div>
+          </div>
+          <div class="friend-actions">
+            <button class="btn success sm" onclick="acceptFriend('${r.id}')"><span>Accept</span></button>
+            <button class="btn danger sm"  onclick="declineFriend('${r.id}')"><span>Decline</span></button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+}
+
+async function sendFriendRequest() {
+  const val = document.getElementById('friend-search-input').value.trim();
+  const msgEl = document.getElementById('friend-search-msg');
+  msgEl.textContent = '';
+  if (!val) { msgEl.textContent = 'Enter a username or user ID.'; return; }
+
+  // Try to find by display_name or by id
+  let { data: found } = await sb.from('profiles')
+    .select('id,display_name')
+    .or(`display_name.ilike.${val},id.eq.${val}`)
+    .neq('id', currentUser.id)
+    .limit(1)
+    .maybeSingle();
+
+  if (!found) {
+    msgEl.style.color = 'var(--ember)';
+    msgEl.textContent = 'No adventurer found with that username or ID.';
+    return;
+  }
+
+  // Show confirm modal
+  pendingFriendTarget = found;
+  document.getElementById('friend-confirm-name').textContent = found.display_name || '(unnamed)';
+  document.getElementById('friend-confirm-id').textContent   = found.id;
+  document.getElementById('friend-confirm-modal').classList.add('open');
+}
+
+async function confirmFriendRequest() {
+  if (!pendingFriendTarget) return;
+  closeFriendModal();
+
+  const { error } = await sb.from('friendships').insert({
+    requester_id: currentUser.id,
+    addressee_id: pendingFriendTarget.id,
+    status: 'pending'
+  });
+
+  if (error) {
+    toast(error.code === '23505' ? 'A request already exists.' : 'Error: ' + error.message, true);
+  } else {
+    toast('Friend request sent!');
+    document.getElementById('friend-search-input').value = '';
+    document.getElementById('friend-search-msg').textContent = '';
+  }
+  pendingFriendTarget = null;
+}
+
+function closeFriendModal(e) {
+  // Only close when clicking the overlay backdrop (not the modal box itself),
+  // or when called directly with no event (e.g. from the ✕ button / cancel button).
+  if (e && e.target !== document.getElementById('friend-confirm-modal')) return;
+  document.getElementById('friend-confirm-modal').classList.remove('open');
+  pendingFriendTarget = null;
+}
+
+
+async function acceptFriend(rowId) {
+  const { error } = await sb.from('friendships').update({ status:'accepted' }).eq('id', rowId);
+  if (error) { toast('Error: ' + error.message, true); return; }
+  toast('Friend request accepted!');
+  renderFriendsPage();
+}
+
+async function declineFriend(rowId) {
+  await sb.from('friendships').delete().eq('id', rowId);
+  toast('Request declined.');
+  renderFriendsPage();
+}
+
+async function removeFriend(rowId) {
+  if (!confirm('Remove this friend from your fellowship?')) return;
+  await sb.from('friendships').delete().eq('id', rowId);
+  toast('Friend removed.');
+  renderFriendsPage();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SETTINGS PAGE
+═══════════════════════════════════════════════════════════ */
+function renderSettingsPage() {
+  const name = currentProfile?.display_name || currentUser?.email?.split('@')[0] || '—';
+  document.getElementById('settings-current-name').textContent = name;
+}
+
+async function changeUsername() {
+  const newName  = document.getElementById('new-username-input').value.trim();
+  const pass     = document.getElementById('username-current-pass').value;
+  const msgEl    = document.getElementById('username-msg');
+  msgEl.style.color = 'var(--ink4)';
+  msgEl.textContent = '';
+
+  if (!newName) { msgEl.style.color='var(--ember)'; msgEl.textContent='Enter a new username.'; return; }
+  if (!pass)    { msgEl.style.color='var(--ember)'; msgEl.textContent='Current password is required.'; return; }
+
+  // Re-authenticate first
+  const { error: authErr } = await sb.auth.signInWithPassword({
+    email: currentUser.email,
+    password: pass
+  });
+  if (authErr) { msgEl.style.color='var(--ember)'; msgEl.textContent='Incorrect password.'; return; }
+
+  // Update display_name in profiles
+  const { error } = await sb.from('profiles').update({
+    display_name: newName,
+    updated_at:   new Date().toISOString()
+  }).eq('id', currentUser.id);
+
+  if (error) { msgEl.style.color='var(--ember)'; msgEl.textContent='Error: ' + error.message; return; }
+
+  currentProfile.display_name = newName;
+  document.getElementById('sidebar-name').textContent  = newName;
+  document.getElementById('sidebar-avatar').textContent = newName.slice(0,1).toUpperCase();
+  document.getElementById('settings-current-name').textContent = newName;
+  document.getElementById('prof-username').textContent = newName;
+  document.getElementById('new-username-input').value  = '';
+  document.getElementById('username-current-pass').value = '';
+  msgEl.style.color = 'var(--teal2)';
+  msgEl.textContent = 'Username updated successfully.';
+  toast('Username updated!');
+}
+
+async function changePassword() {
+  const oldPass  = document.getElementById('old-pass-input').value;
+  const newPass  = document.getElementById('new-pass-input').value;
+  const confPass = document.getElementById('confirm-pass-input').value;
+  const msgEl    = document.getElementById('pass-msg');
+  msgEl.style.color = 'var(--ink4)';
+  msgEl.textContent = '';
+
+  if (!oldPass || !newPass || !confPass) { msgEl.style.color='var(--ember)'; msgEl.textContent='All fields are required.'; return; }
+  if (newPass !== confPass)              { msgEl.style.color='var(--ember)'; msgEl.textContent='New passwords do not match.'; return; }
+  if (newPass.length < 6)               { msgEl.style.color='var(--ember)'; msgEl.textContent='Password must be at least 6 characters.'; return; }
+
+  // Re-authenticate with old password
+  const { error: authErr } = await sb.auth.signInWithPassword({
+    email: currentUser.email,
+    password: oldPass
+  });
+  if (authErr) { msgEl.style.color='var(--ember)'; msgEl.textContent='Current password is incorrect.'; return; }
+
+  // Update to new password
+  const { error } = await sb.auth.updateUser({ password: newPass });
+  if (error) { msgEl.style.color='var(--ember)'; msgEl.textContent='Error: ' + error.message; return; }
+
+  document.getElementById('old-pass-input').value     = '';
+  document.getElementById('new-pass-input').value     = '';
+  document.getElementById('confirm-pass-input').value = '';
+  msgEl.style.color = 'var(--teal2)';
+  msgEl.textContent = 'Password updated successfully.';
+  toast('Password changed!');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BILLING PAGE
+   Reads is_supporter / role from the profiles table.
+   Hook this up to Stripe or your payment provider when ready.
+═══════════════════════════════════════════════════════════ */
+function renderBillingPage() {
+  const role        = currentProfile?.role || 'user';
+  const isSupporter = currentProfile?.is_supporter === true;
+  const expires     = currentProfile?.supporter_expires
+    ? new Date(currentProfile.supporter_expires).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })
+    : null;
+
+  if (isSupporter || role === 'developer' || role === 'admin') {
+    const plan  = role === 'admin' || role === 'developer' ? 'Forgemaster' : 'Supporter';
+    document.getElementById('billing-icon').textContent   = '⚒';
+    document.getElementById('billing-plan').textContent   = plan;
+    document.getElementById('billing-detail').textContent = expires
+      ? `Active subscription · renews ${expires}`
+      : 'Active subscription';
+    document.getElementById('billing-badge').textContent  = plan.toUpperCase();
+    document.getElementById('billing-badge').className    = 'badge done';
+  } else {
+    document.getElementById('billing-icon').textContent   = '◈';
+    document.getElementById('billing-plan').textContent   = 'Free Adventurer';
+    document.getElementById('billing-detail').textContent = 'Access to the base realm — no active subscription.';
+    document.getElementById('billing-badge').textContent  = 'FREE';
+    document.getElementById('billing-badge').className    = 'badge pending';
+  }
+}
+
+function handleSubscribe(plan) {
+  // TODO: integrate Stripe checkout or your payment link here
+  toast(`Billing integration coming soon — ${plan} plan selected.`);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DISCORD LINKED ACCOUNTS PAGE
+   Reads discord_id from profiles table.
+   For full OAuth, configure Discord provider in Supabase Auth settings.
+═══════════════════════════════════════════════════════════ */
+function renderDiscordPage() {
+  const discordId = currentProfile?.discord_id;
+  const statusEl  = document.getElementById('discord-status');
+  const linkBtn   = document.getElementById('discord-link-btn');
+  const unlinkBtn = document.getElementById('discord-unlink-btn');
+
+  if (discordId) {
+    statusEl.textContent    = `Status: Linked (ID: ${discordId})`;
+    statusEl.style.color    = 'var(--teal2)';
+    linkBtn.style.display   = 'none';
+    unlinkBtn.style.display = '';
+  } else {
+    statusEl.textContent    = 'Status: Not linked';
+    statusEl.style.color    = 'var(--ink4)';
+    linkBtn.style.display   = '';
+    unlinkBtn.style.display = 'none';
+  }
+}
+
+async function linkDiscord() {
+  // Uses linkIdentity so the current session is preserved — requires Discord provider
+  // enabled in Supabase Auth → Providers, with "Allow multiple accounts per user" ON.
+  const { error } = await sb.auth.linkIdentity({
+    provider: 'discord',
+    options: { redirectTo: window.location.href }
+  });
+  if (error) toast('Error: ' + error.message, true);
+}
+
+async function unlinkDiscord() {
+  if (!confirm('Unlink your Discord account from Ironveil?')) return;
+  const { error } = await sb.from('profiles').update({
+    discord_id:  null,
+    updated_at:  new Date().toISOString()
+  }).eq('id', currentUser.id);
+  if (error) { toast('Error: ' + error.message, true); return; }
+  currentProfile.discord_id = null;
+  renderDiscordPage();
+  toast('Discord unlinked.');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════════ */
+let toastTimer;
+function toast(msg, err=false) {
+  const el = document.getElementById('toast');
+  el.textContent     = msg;
+  el.style.color     = err ? 'var(--ember2)' : 'var(--gold2)';
+  el.style.borderColor = err ? 'rgba(192,64,32,.5)' : 'rgba(139,105,20,.4)';
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+═══════════════════════════════════════════════════════════ */
+document.getElementById('in-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignIn(); });
+document.getElementById('up-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignUp(); });
+document.getElementById('friend-search-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendFriendRequest(); });
+
+/* ─── BOOT ────────────────────────────────────────────────── */
+initAuth();
+</script>
+</body>
+</html>

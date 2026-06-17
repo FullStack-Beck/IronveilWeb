@@ -1004,7 +1004,7 @@ function renderHeader() {
     const name = profile.display_name || user.email.split('@')[0];
     const canAdmin = profile.role==='developer'||profile.role==='admin';
     el.innerHTML = `
-      <div class="user-chip">⚒ ${name}</div>
+      <a class="user-chip" href="profile.html">⚒ ${name}</a>
       ${canAdmin?`<a class="btn ghost" href="admin.html">⬡ Dev Portal</a>`:''}
       <button class="btn ghost" onclick="doSignOut()">Sign Out</button>
     `;
