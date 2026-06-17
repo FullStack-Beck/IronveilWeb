@@ -383,6 +383,17 @@ let selectedPriceId = 'price_1Tj9DfEdRU4MuDXKP0iLryee'; // default monthly
   await initAuth();
   await Promise.all([loadSupporterCount(), loadMemorialWall()]);
 
+  // Discord OAuth callback
+  const oauthCode = new URLSearchParams(window.location.search).get('code');
+  const oauthState = new URLSearchParams(window.location.search).get('state');
+
+  if (oauthCode && oauthState && user) {
+    await handleDiscordCallback(oauthCode, oauthState);
+
+    // Clean URL
+    window.history.replaceState({}, '', '/supporter.html');
+  }
+
   // Handle Stripe return redirects
   const params = new URLSearchParams(window.location.search);
   if (params.get('success') === 'true') {
