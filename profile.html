@@ -1156,13 +1156,24 @@ async function sendFriendRequest() {
   msgEl.textContent = '';
   if (!val) { msgEl.textContent = 'Enter a username or user ID.'; return; }
 
-  // Try to find by display_name or by id
+  // Try by display_name first (case-insensitive)
   let { data: found } = await sb.from('profiles')
     .select('id,display_name')
-    .or(`display_name.ilike.${val},id.eq.${val}`)
+    .ilike('display_name', val)
     .neq('id', currentUser.id)
     .limit(1)
     .maybeSingle();
+
+  // If not found by name, try by UUID
+  if (!found) {
+    const { data: byId } = await sb.from('profiles')
+      .select('id,display_name')
+      .eq('id', val)
+      .neq('id', currentUser.id)
+      .limit(1)
+      .maybeSingle();
+    found = byId;
+  }
 
   if (!found) {
     msgEl.style.color = 'var(--ember)';
