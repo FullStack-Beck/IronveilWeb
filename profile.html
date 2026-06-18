@@ -1190,13 +1190,17 @@ async function sendFriendRequest() {
 
 async function confirmFriendRequest() {
   if (!pendingFriendTarget) return;
-  closeFriendModal();
+  
+  const target = pendingFriendTarget; // save it first
+  closeFriendModal();                 // now safe to clear
 
-  const { error } = await sb.from('friendships').insert({
+  const { data, error } = await sb.from('friendships').insert({
     requester_id: currentUser.id,
-    addressee_id: pendingFriendTarget.id,
+    addressee_id: target.id,          // use saved reference
     status: 'pending'
-  });
+  }).select();
+
+  console.log('insert result:', data, error);
 
   if (error) {
     toast(error.code === '23505' ? 'A request already exists.' : 'Error: ' + error.message, true);
@@ -1204,8 +1208,8 @@ async function confirmFriendRequest() {
     toast('Friend request sent!');
     document.getElementById('friend-search-input').value = '';
     document.getElementById('friend-search-msg').textContent = '';
+    renderFriendsPage();
   }
-  pendingFriendTarget = null;
 }
 
 function closeFriendModal(e) {
