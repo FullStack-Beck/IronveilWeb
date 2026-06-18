@@ -422,6 +422,21 @@ hr.rune-divider::after {
 .hint-text.ok  { color:var(--teal2); font-style:normal; }
 .hint-text.err { color:var(--ember); font-style:normal; }
 
+.hidden { display:none !important; }
+
+/* ─── PLAN CARDS ─────────────────────────────── */
+.plan-card {
+  border:1.5px solid var(--border2); padding:22px 20px;
+  cursor:pointer; transition:all .2s; position:relative;
+  background:rgba(139,105,20,.02);
+}
+.plan-card:hover { border-color:var(--gold2); box-shadow:0 4px 20px var(--shadow); transform:translateY(-2px); }
+.plan-card.selected { border-color:var(--gold3); border-width:2px; background:rgba(139,105,20,.06); }
+.plan-card.selected::after {
+  content:'✓ SELECTED'; position:absolute; top:10px; right:12px;
+  font-family:'Cinzel',serif; font-size:8.5px; letter-spacing:.12em; color:var(--gold2);
+}
+
 @media(max-width:900px) {
   .sidebar { width:56px; }
   .brand-name, .brand-tag, .nav-item span, .sidebar-footer .user-info { display:none; }
@@ -742,58 +757,68 @@ hr.rune-divider::after {
           <div class="billing-info">
             <div class="billing-plan" id="billing-plan">Free Adventurer</div>
             <div class="billing-detail" id="billing-detail">Access to the base realm — no active subscription.</div>
-            <div style="margin-top:10px" id="billing-badge-wrap">
+            <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
               <span class="badge pending" id="billing-badge">FREE</span>
+              <button class="btn sm" id="portal-btn" onclick="openPortal()" style="display:none"><span>⬡ Manage Subscription</span></button>
             </div>
           </div>
         </div>
 
-        <!-- Subscription Plans -->
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">Subscription Plans</div>
-          </div>
-          <div class="panel-body">
-            <div class="two-col" style="gap:16px">
+        <!-- Message area (Stripe return / errors) -->
+        <div id="billing-msg" style="display:none;padding:12px 18px;margin-bottom:16px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:.06em;border:1px solid var(--border2)"></div>
 
-              <div style="border:1px solid var(--border2);padding:20px;background:rgba(139,105,20,.03);position:relative">
-                <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);letter-spacing:.08em;margin-bottom:8px">Supporter</div>
-                <div style="font-family:'Cinzel Decorative',serif;font-size:26px;color:var(--ink2);margin-bottom:4px">$5 <span style="font-family:'Crimson Pro',serif;font-size:16px;color:var(--ink4)">/month</span></div>
-                <ul style="list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:8px;font-size:15px;color:var(--ink3)">
-                  <li>⚔ Early access to new content</li>
-                  <li>⚔ Supporter badge on profile</li>
-                  <li>⚔ Name on the memorial wall</li>
-                  <li>⚔ Discord supporter role</li>
-                </ul>
-                <button class="btn" style="margin-top:20px;width:100%" onclick="handleSubscribe('supporter')"><span>Become a Supporter</span></button>
-              </div>
-
-              <div style="border:1px solid var(--border2);padding:20px;background:rgba(139,105,20,.03);position:relative">
-                <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);letter-spacing:.08em;margin-bottom:8px">Forgemaster</div>
-                <div style="font-family:'Cinzel Decorative',serif;font-size:26px;color:var(--ink2);margin-bottom:4px">$15 <span style="font-family:'Crimson Pro',serif;font-size:16px;color:var(--ink4)">/month</span></div>
-                <ul style="list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:8px;font-size:15px;color:var(--ink3)">
-                  <li>⚔ Everything in Supporter</li>
-                  <li>⚔ Beta access to unreleased builds</li>
-                  <li>⚔ Direct feedback channel with devs</li>
-                  <li>⚔ Forgemaster badge &amp; title</li>
-                </ul>
-                <button class="btn" style="margin-top:20px;width:100%" onclick="handleSubscribe('forgemaster')"><span>Become a Forgemaster</span></button>
-              </div>
-
+        <!-- Subscriber: already subscribed gate -->
+        <div id="billing-already-gate" style="display:none">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Your Subscription</div></div>
+            <div class="panel-body">
+              <div style="font-size:16px;color:var(--ink2);margin-bottom:16px">You already have an active subscription. Use the <strong>Manage Subscription</strong> button above to update your plan, payment method, or cancel.</div>
             </div>
-            <div style="margin-top:16px;font-size:14px;color:var(--ink4);font-style:italic;text-align:center">
-              Billing integration coming soon — subscription management will be available at launch.
+          </div>
+        </div>
+
+        <!-- Non-subscriber: plan selector + checkout -->
+        <div id="billing-checkout-gate">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Choose a Plan</div></div>
+            <div class="panel-body">
+              <div class="two-col" style="gap:16px;margin-bottom:20px">
+
+                <div class="plan-card selected" data-price="price_1Tj4vIEdRU4MuDXKKvxqbxd5" onclick="selectPlan(this)">
+                  <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:.16em;color:var(--gold2);border:1px solid var(--gold2);padding:2px 8px;display:inline-block;margin-bottom:10px">SUPPORTER</div>
+                  <div style="font-family:'Cinzel Decorative',serif;font-size:28px;color:var(--ink2);margin-bottom:4px">$5 <span style="font-family:'Crimson Pro',serif;font-size:16px;color:var(--ink4)">/month</span></div>
+                  <ul style="list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:8px;font-size:15px;color:var(--ink3)">
+                    <li>⚔ Early access to new content</li>
+                    <li>⚔ Supporter badge on profile</li>
+                    <li>⚔ Name on the memorial wall</li>
+                    <li>⚔ Discord supporter role</li>
+                  </ul>
+                </div>
+
+                <div class="plan-card" data-price="price_1Tj4vIEdRU4MuDXKForgemaster" onclick="selectPlan(this)">
+                  <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:.16em;color:var(--gold2);border:1px solid var(--gold2);padding:2px 8px;display:inline-block;margin-bottom:10px">FORGEMASTER</div>
+                  <div style="font-family:'Cinzel Decorative',serif;font-size:28px;color:var(--ink2);margin-bottom:4px">$15 <span style="font-family:'Crimson Pro',serif;font-size:16px;color:var(--ink4)">/month</span></div>
+                  <ul style="list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:8px;font-size:15px;color:var(--ink3)">
+                    <li>⚔ Everything in Supporter</li>
+                    <li>⚔ Beta access to unreleased builds</li>
+                    <li>⚔ Direct feedback to devs</li>
+                    <li>⚔ Forgemaster badge &amp; title</li>
+                  </ul>
+                </div>
+
+              </div>
+              <button class="btn full" id="join-btn" onclick="startCheckout()"><span>⚒ Proceed to Checkout</span></button>
             </div>
           </div>
         </div>
 
         <!-- Payment Info -->
-        <div class="panel" style="opacity:.7">
+        <div class="panel" style="opacity:.7;margin-top:16px">
           <div class="panel-header">
-            <div class="panel-title">Payment Information <span class="badge wip-badge" style="margin-left:8px">COMING SOON</span></div>
+            <div class="panel-title">Billing History <span class="badge wip-badge" style="margin-left:8px">COMING SOON</span></div>
           </div>
           <div class="panel-body">
-            <div class="empty-state">Payment methods and billing history will appear here once billing goes live.</div>
+            <div class="empty-state">Payment history will appear here once billing goes live.</div>
           </div>
         </div>
 
@@ -813,10 +838,20 @@ hr.rune-divider::after {
             <div class="link-status" id="discord-status">Status: Not linked</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0">
-            <button class="btn success" id="discord-link-btn" onclick="linkDiscord()"><span>Link Discord</span></button>
-            <button class="btn danger sm" id="discord-unlink-btn" onclick="unlinkDiscord()" style="display:none"><span>Unlink</span></button>
+            <!-- Unlinked state -->
+            <div id="discord-unlinked">
+              <button class="btn success" id="discord-connect-btn" onclick="connectDiscord()"><span>Link Discord</span></button>
+              <div id="discord-oauth-processing" class="hidden" style="font-family:'Cinzel',serif;font-size:11px;color:var(--ink4);letter-spacing:.08em;padding:8px 0">Linking…</div>
+            </div>
+            <!-- Linked state -->
+            <div id="discord-linked" class="hidden" style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;color:var(--teal2)" id="discord-username-display"></div>
+              <button class="btn danger sm" onclick="unlinkDiscord()"><span>Unlink</span></button>
+            </div>
           </div>
         </div>
+
+        <div id="discord-msg" style="min-height:18px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.06em;margin-bottom:12px"></div>
 
         <div class="panel">
           <div class="panel-header">
@@ -826,15 +861,15 @@ hr.rune-divider::after {
             <div style="display:flex;flex-direction:column;gap:14px;font-size:16px;color:var(--ink2)">
               <div style="display:flex;gap:12px;align-items:flex-start">
                 <span style="color:var(--gold);font-size:18px;flex-shrink:0;margin-top:1px">◈</span>
-                <span>Supporter and Forgemaster subscribers automatically receive their Discord roles.</span>
+                <span>Supporters "Kindlers" automatically receive their Discord roles through linking.</span>
               </div>
               <div style="display:flex;gap:12px;align-items:flex-start">
                 <span style="color:var(--gold);font-size:18px;flex-shrink:0;margin-top:1px">◈</span>
-                <span>Your in-game name is synced to the community server so other adventurers can find you.</span>
+                <span>Kindlers, get a badge in game they can wear!</span>
               </div>
               <div style="display:flex;gap:12px;align-items:flex-start">
                 <span style="color:var(--gold);font-size:18px;flex-shrink:0;margin-top:1px">◈</span>
-                <span>Beta announcements and patch notes will be delivered directly to your Discord DMs if opted in.</span>
+                <span>You will get all the release announcements before everyone else in our Kindler category in the discord!</span>
               </div>
               <div style="display:flex;gap:12px;align-items:flex-start">
                 <span style="color:var(--gold);font-size:18px;flex-shrink:0;margin-top:1px">◈</span>
@@ -938,7 +973,6 @@ function showDashboard() {
   renderProfilePage();
   renderFriendsPage();
   renderSettingsPage();
-  renderBillingPage();
   renderDiscordPage();
 }
 
@@ -1269,19 +1303,31 @@ async function changePassword() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   BILLING PAGE
-   Reads is_supporter / role from the profiles table.
-   Hook this up to Stripe or your payment provider when ready.
+   STRIPE / BILLING CONFIG
+═══════════════════════════════════════════════════════════ */
+const EDGE_BASE = 'https://tzehikqnnzaykyaomzer.supabase.co/functions/v1';
+
+let selectedPriceId = 'price_1Tj4vIEdRU4MuDXKKvxqbxd5'; // default: Supporter monthly
+
+function selectPlan(card) {
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedPriceId = card.dataset.price;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BILLING PAGE RENDER
 ═══════════════════════════════════════════════════════════ */
 function renderBillingPage() {
   const role        = currentProfile?.role || 'user';
   const isSupporter = currentProfile?.is_supporter === true;
+  const isElevated  = role === 'developer' || role === 'admin';
   const expires     = currentProfile?.supporter_expires
     ? new Date(currentProfile.supporter_expires).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })
     : null;
 
-  if (isSupporter || role === 'developer' || role === 'admin') {
-    const plan  = role === 'admin' || role === 'developer' ? 'Forgemaster' : 'Supporter';
+  if (isSupporter || isElevated) {
+    const plan = isElevated ? 'Forgemaster' : 'Supporter';
     document.getElementById('billing-icon').textContent   = '⚒';
     document.getElementById('billing-plan').textContent   = plan;
     document.getElementById('billing-detail').textContent = expires
@@ -1289,64 +1335,190 @@ function renderBillingPage() {
       : 'Active subscription';
     document.getElementById('billing-badge').textContent  = plan.toUpperCase();
     document.getElementById('billing-badge').className    = 'badge done';
+    document.getElementById('portal-btn').style.display   = isSupporter ? '' : 'none';
   } else {
     document.getElementById('billing-icon').textContent   = '◈';
     document.getElementById('billing-plan').textContent   = 'Free Adventurer';
     document.getElementById('billing-detail').textContent = 'Access to the base realm — no active subscription.';
     document.getElementById('billing-badge').textContent  = 'FREE';
     document.getElementById('billing-badge').className    = 'badge pending';
+    document.getElementById('portal-btn').style.display   = 'none';
+  }
+
+  // Show/hide checkout vs already-subscribed panels
+  const subscribed = isSupporter || isElevated;
+  document.getElementById('billing-already-gate').style.display   = subscribed ? '' : 'none';
+  document.getElementById('billing-checkout-gate').style.display  = subscribed ? 'none' : '';
+}
+
+function showBillingMsg(text, isErr) {
+  const el = document.getElementById('billing-msg');
+  el.textContent     = text;
+  el.style.display   = text ? '' : 'none';
+  el.style.color     = isErr ? 'var(--ember)' : 'var(--teal2)';
+  el.style.borderColor = isErr ? 'rgba(139,42,16,.4)' : 'rgba(30,128,96,.3)';
+  el.style.background  = isErr ? 'rgba(139,42,16,.04)' : 'rgba(30,90,74,.04)';
+}
+
+/* ─── STRIPE CHECKOUT ─────────────────────────────────── */
+async function startCheckout() {
+  const btn = document.getElementById('join-btn');
+  btn.disabled = true;
+  showBillingMsg('Opening the Stripe checkout…', false);
+
+  try {
+    const res = await fetch(`${EDGE_BASE}/create-checkout-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: currentUser.id, price_id: selectedPriceId }),
+    });
+    const { url, error } = await res.json();
+
+    if (error === 'already_subscribed') {
+      showBillingMsg('You already have an active subscription.', true);
+      btn.disabled = false;
+      return;
+    }
+    if (error || !url) throw new Error(error || 'No checkout URL returned');
+    window.location.href = url;
+
+  } catch (err) {
+    showBillingMsg(err.message || 'Something went wrong — please try again.', true);
+    btn.disabled = false;
   }
 }
 
-function handleSubscribe(plan) {
-  // TODO: integrate Stripe checkout or your payment link here
-  toast(`Billing integration coming soon — ${plan} plan selected.`);
+/* ─── STRIPE PORTAL ───────────────────────────────────── */
+async function openPortal() {
+  const btn = document.getElementById('portal-btn');
+  btn.disabled = true;
+  btn.querySelector('span').textContent = 'Opening…';
+
+  try {
+    const res = await fetch(`${EDGE_BASE}/create-portal-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: currentUser.id }),
+    });
+    const { url, error } = await res.json();
+    if (error || !url) throw new Error(error || 'Could not open portal');
+    window.location.href = url;
+
+  } catch (err) {
+    btn.disabled = false;
+    btn.querySelector('span').textContent = '⬡ Manage Subscription';
+    showBillingMsg(err.message || 'Could not open billing portal.', true);
+  }
+}
+
+/* ─── REFRESH PROFILE (post-checkout) ────────────────── */
+async function refreshProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
+  if (data) currentProfile = data;
+  renderProfilePage();
+  renderBillingPage();
+  renderDiscordPage();
+  const name = currentProfile?.display_name || currentUser?.email?.split('@')[0] || '?';
+  document.getElementById('sidebar-name').textContent   = name;
+  document.getElementById('sidebar-role').textContent   = (currentProfile?.role || 'adventurer').toUpperCase();
+  document.getElementById('sidebar-avatar').textContent = name.slice(0,1).toUpperCase();
 }
 
 /* ═══════════════════════════════════════════════════════════
-   DISCORD LINKED ACCOUNTS PAGE
-   Reads discord_id from profiles table.
-   For full OAuth, configure Discord provider in Supabase Auth settings.
+   DISCORD LINKED ACCOUNTS
+   Uses custom OAuth flow via the link-discord edge function,
+   matching the pattern in supporter.html.
 ═══════════════════════════════════════════════════════════ */
+const DISCORD_CLIENT_ID  = '1516605099085139988';
+const DISCORD_REDIRECT   = window.location.origin + window.location.pathname;
+const DISCORD_SCOPE      = 'identify';
+
 function renderDiscordPage() {
   const discordId = currentProfile?.discord_id;
   const statusEl  = document.getElementById('discord-status');
-  const linkBtn   = document.getElementById('discord-link-btn');
-  const unlinkBtn = document.getElementById('discord-unlink-btn');
 
   if (discordId) {
-    statusEl.textContent    = `Status: Linked (ID: ${discordId})`;
-    statusEl.style.color    = 'var(--teal2)';
-    linkBtn.style.display   = 'none';
-    unlinkBtn.style.display = '';
+    statusEl.textContent = `Status: Linked`;
+    statusEl.style.color = 'var(--teal2)';
+    document.getElementById('discord-linked').classList.remove('hidden');
+    document.getElementById('discord-unlinked').classList.add('hidden');
+    document.getElementById('discord-username-display').textContent =
+      currentProfile.discord_username || `ID: ${discordId}`;
   } else {
-    statusEl.textContent    = 'Status: Not linked';
-    statusEl.style.color    = 'var(--ink4)';
-    linkBtn.style.display   = '';
-    unlinkBtn.style.display = 'none';
+    statusEl.textContent = 'Status: Not linked';
+    statusEl.style.color = 'var(--ink4)';
+    document.getElementById('discord-linked').classList.add('hidden');
+    document.getElementById('discord-unlinked').classList.remove('hidden');
   }
 }
 
-async function linkDiscord() {
-  // Uses linkIdentity so the current session is preserved — requires Discord provider
-  // enabled in Supabase Auth → Providers, with "Allow multiple accounts per user" ON.
-  const { error } = await sb.auth.linkIdentity({
-    provider: 'discord',
-    options: { redirectTo: window.location.href }
+function connectDiscord() {
+  const state = crypto.randomUUID();
+  sessionStorage.setItem('discord_oauth_state', state);
+  const params = new URLSearchParams({
+    client_id: DISCORD_CLIENT_ID,
+    redirect_uri: DISCORD_REDIRECT,
+    response_type: 'code',
+    scope: DISCORD_SCOPE,
+    state,
   });
-  if (error) toast('Error: ' + error.message, true);
+  window.location.href = `https://discord.com/oauth2/authorize?${params}`;
+}
+
+async function handleDiscordCallback(code, returnedState) {
+  const savedState = sessionStorage.getItem('discord_oauth_state');
+  sessionStorage.removeItem('discord_oauth_state');
+
+  if (returnedState !== savedState) {
+    showDiscordMsg('Discord link failed — state mismatch. Please try again.', true);
+    return;
+  }
+
+  document.getElementById('discord-oauth-processing')?.classList.remove('hidden');
+  document.getElementById('discord-connect-btn')?.classList.add('hidden');
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch(`${EDGE_BASE}/link-discord`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+      },
+      body: JSON.stringify({ code, redirect_uri: DISCORD_REDIRECT, user_id: currentUser.id }),
+    });
+    const { discord_id, discord_username, error } = await res.json();
+    if (error || !discord_id) throw new Error(error || 'Failed to link Discord');
+
+    currentProfile.discord_id       = discord_id;
+    currentProfile.discord_username = discord_username;
+    renderDiscordPage();
+    showDiscordMsg('', false);
+
+  } catch (err) {
+    document.getElementById('discord-oauth-processing')?.classList.add('hidden');
+    document.getElementById('discord-connect-btn')?.classList.remove('hidden');
+    showDiscordMsg(err.message || 'Could not link Discord — please try again.', true);
+  }
 }
 
 async function unlinkDiscord() {
   if (!confirm('Unlink your Discord account from Ironveil?')) return;
-  const { error } = await sb.from('profiles').update({
-    discord_id:  null,
-    updated_at:  new Date().toISOString()
-  }).eq('id', currentUser.id);
-  if (error) { toast('Error: ' + error.message, true); return; }
-  currentProfile.discord_id = null;
+  const { error } = await sb.from('profiles')
+    .update({ discord_id: null, discord_username: null, updated_at: new Date().toISOString() })
+    .eq('id', currentUser.id);
+  if (error) { showDiscordMsg('Failed to unlink — try again.', true); return; }
+  currentProfile.discord_id       = null;
+  currentProfile.discord_username = null;
   renderDiscordPage();
+  showDiscordMsg('Discord account unlinked.', false);
   toast('Discord unlinked.');
+}
+
+function showDiscordMsg(text, isErr) {
+  const el = document.getElementById('discord-msg');
+  el.textContent = text;
+  el.style.color = isErr ? 'var(--ember)' : 'var(--teal2)';
 }
 
 /* ═══════════════════════════════════════════════════════════
