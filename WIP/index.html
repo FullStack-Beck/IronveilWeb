@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Project Ironveil — Open Development VR RPG</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ──────────────────────────────────────────────── */
+:root {
+  --parch:   #f5ead4;
+  --parch2:  #ede0bc;
+  --parch3:  #e5d0a0;
+  --parch4:  #d8c088;
+  --ink:     #1a1208;
+  --ink2:    #3b2c0e;
+  --ink3:    #6b4e22;
+  --ink4:    #8c6d3f;
+  --ink5:    #b8924a;
+  --blood:   #7a1c1c;
+  --teal:    #2d6b5a;
+  --teal2:   #3a8a72;
+  --teal3:   #4aaa8e;
+  --gold:    #8b6910;
+  --gold2:   #b8900f;
+  --gold3:   #d4a820;
+  --gold4:   #f0c83a;
+  --border:  rgba(139,105,20,.2);
+  --border2: rgba(139,105,20,.4);
+  --border3: rgba(139,105,20,.65);
+  --shadow:  rgba(26,18,8,.28);
+  --shadow2: rgba(26,18,8,.55);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+
+body {
+  background: var(--parch);
+  color: var(--ink);
+  font-family: 'Crimson Pro', serif;
+  font-size: 17px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* parchment noise */
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
+  opacity:.55; mix-blend-mode:multiply;
+}
+
+/* ── HEADER ──────────────────────────────────────────────── */
+header {
+  position:fixed; top:0; left:0; right:0; z-index:400;
+  height:62px; padding:0 48px;
+  display:flex; align-items:center; justify-content:space-between;
+  transition: background .4s, border-color .4s, box-shadow .4s;
+}
+
+header.scrolled {
+  background: rgba(245,234,212,.96);
+  border-bottom: 1px solid var(--border2);
+  box-shadow: 0 2px 20px var(--shadow);
+  backdrop-filter: blur(8px);
+}
+
+header::after {
+  content:''; position:absolute; bottom:-4px; left:0; right:0; height:3px;
+  background: repeating-linear-gradient(90deg, var(--gold2) 0, var(--gold2) 5px, transparent 5px, transparent 9px);
+  opacity:0; transition:opacity .4s;
+}
+header.scrolled::after { opacity:.4; }
+
+.logo {
+  font-family:'Cinzel',serif; font-weight:700;
+  font-size:15px; letter-spacing:.2em;
+  color:var(--parch); text-decoration:none;
+  display:flex; align-items:center; gap:10px;
+  transition: color .4s;
+}
+header.scrolled .logo { color:var(--ink); }
+
+.logo-mark {
+  width:32px; height:32px;
+  border:1.5px solid rgba(255,255,255,.4);
+  background:rgba(0,0,0,.3);
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; transition: border-color .4s, background .4s;
+}
+header.scrolled .logo-mark { border-color:var(--border3); background:var(--parch3); }
+
+nav { display:flex; gap:32px; align-items: center; }
+nav a {
+  font-family:'Cinzel',serif; font-size:11px; letter-spacing:.16em;
+  color:rgba(255,255,255,.75); text-decoration:none; transition:color .3s;
+}
+header.scrolled nav a { color:var(--ink3); }
+nav a:hover { color:var(--gold3) !important; }
+
+.header-right { display:flex; gap:8px; align-items:center; }
+
+/* ── BUTTONS ─────────────────────────────────────────────── */
+.btn {
+  font-family:'Cinzel',serif; font-size:11px; letter-spacing:.12em;
+  cursor:pointer; transition:all .2s;
+  border:1.5px solid var(--border2); padding:7px 18px;
+  background:var(--parch2); color:var(--ink2);
+  text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+}
+.btn:hover { background:var(--parch3); border-color:var(--gold2); }
+.btn.primary { background:var(--ink2); color:var(--parch); border-color:var(--ink2); }
+.btn.primary:hover { background:var(--ink); }
+.btn.ghost {
+  background:rgba(0,0,0,.25); color:var(--parch);
+  border-color:rgba(255,255,255,.35); backdrop-filter:blur(4px);
+}
+.btn.ghost:hover { background:rgba(0,0,0,.45); border-color:rgba(255,255,255,.6); }
+header.scrolled .btn.ghost { background:var(--ink2); color:var(--parch); border-color:var(--ink2); }
+header.scrolled .btn.ghost:hover { background:var(--ink); }
+
+.user-chip {
+  display:flex; align-items:center; gap:8px;
+  font-family:'Cinzel',serif; font-size:11px;
+  color:var(--parch); letter-spacing:.08em;
+  padding:5px 12px; border:1px solid rgba(255,255,255,.35);
+  background:rgba(0,0,0,.25); backdrop-filter:blur(4px);
+  transition: all .4s;
+}
+header.scrolled .user-chip { color:var(--ink4); border-color:var(--border); background:var(--parch2); }
+
+/* ══ CINEMATIC HERO ══════════════════════════════════════════ */
+.hero-shell {
+  position:relative; width:100%; height:100svh; min-height:640px;
+  overflow:hidden; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+}
+
+/* the landscape art */
+.hero-bg {
+  position:absolute; inset:0;
+  background: url('ironveilmiddlenotitle.png') center 30% / cover no-repeat;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+/* dark vignette so text reads over art */
+.hero-vignette {
+  position:absolute; inset:0;
+  background:
+    linear-gradient(to bottom,
+      rgba(10,7,3,.52) 0%,
+      rgba(10,7,3,.18) 30%,
+      rgba(10,7,3,.08) 55%,
+      rgba(26,18,8,.72) 82%,
+      var(--parch) 100%
+    );
+  z-index:1;
+}
+
+/* subtle scanline atmosphere */
+.hero-vignette::after {
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(
+    0deg,
+    rgba(0,0,0,.015) 0px,
+    rgba(0,0,0,.015) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events:none;
+}
+
+.hero-content {
+  position:relative; z-index:2;
+  display:flex; flex-direction:column;
+  align-items:center;
+  gap:0;
+  padding-bottom: 80px;
+}
+
+/* the IRONVEIL title image */
+.hero-logo-img {
+  width: clamp(320px, 58vw, 820px);
+  filter: drop-shadow(0 8px 40px rgba(0,0,0,.7)) drop-shadow(0 2px 6px rgba(0,0,0,.9));
+  animation: heroFade 1.2s ease both;
+  margin-bottom: 2px;
+}
+
+.hero-eyebrow {
+  font-family:'Cinzel',serif; font-size:10px;
+  letter-spacing:.46em; color:rgba(240,200,58,.7);
+  margin-bottom: 22px;
+  animation: heroFade 1.2s .15s ease both;
+}
+
+.hero-tagline {
+  font-family:'IM Fell English',serif; font-style:italic;
+  font-size:clamp(16px,2.4vw,22px);
+  color:rgba(245,234,212,.88);
+  letter-spacing:.06em;
+  text-shadow: 0 2px 12px rgba(0,0,0,.7);
+  margin-bottom: 36px;
+  animation: heroFade 1.2s .25s ease both;
+}
+
+/* three stat pills */
+.hero-stats {
+  display:flex; gap:1px;
+  border:1px solid rgba(240,200,58,.3);
+  background:rgba(0,0,0,.35);
+  backdrop-filter:blur(6px);
+  margin-bottom: 30px;
+  animation: heroFade 1.2s .35s ease both;
+}
+
+.hero-stat {
+  padding:14px 28px; text-align:center;
+  border-right:1px solid rgba(240,200,58,.2);
+}
+.hero-stat:last-child { border-right:none; }
+
+.hs-val {
+  font-family:'Cinzel',serif; font-size:30px; font-weight:700;
+  color:var(--gold4); line-height:1; margin-bottom:4px;
+}
+.hs-key {
+  font-family:'Cinzel',serif; font-size:8.5px;
+  letter-spacing:.28em; color:rgba(245,234,212,.55);
+}
+
+.hero-cta {
+  display:flex; gap:12px; align-items:center;
+  animation: heroFade 1.2s .45s ease both;
+}
+
+/* playtest badge */
+.pt-badge {
+  display:inline-flex; align-items:center; gap:10px;
+  padding:9px 22px;
+  border:1px solid rgba(240,200,58,.25);
+  background:rgba(0,0,0,.3); backdrop-filter:blur(4px);
+  font-family:'Cinzel',serif; font-size:10.5px;
+  letter-spacing:.12em; color:rgba(245,234,212,.7);
+  animation: heroFade 1.2s .55s ease both;
+  margin-top:24px;
+}
+.pt-pip {
+  width:7px; height:7px; border-radius:50%;
+  background:rgba(245,234,212,.35);
+  animation:pipPulse 2.5s ease-in-out infinite;
+}
+.pt-pip.open { background:var(--teal3); }
+.pt-pip.soon { background:var(--gold3); }
+
+@keyframes pipPulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:.4; transform:scale(.75); }
+}
+
+/* scroll cue */
+.hero-scroll-cue {
+  position:absolute; bottom:28px; left:50%; transform:translateX(-50%);
+  z-index:2; font-family:'Cinzel',serif; font-size:9px;
+  letter-spacing:.28em; color:rgba(245,234,212,.4);
+  display:flex; flex-direction:column; align-items:center; gap:7px;
+  animation: heroFade 1.6s .8s ease both;
+}
+.scroll-arrow {
+  width:1px; height:32px;
+  background:linear-gradient(to bottom, rgba(245,234,212,.4), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+@keyframes scrollPulse {
+  0%,100% { opacity:.4; transform:scaleY(1); }
+  50%      { opacity:1; transform:scaleY(1.3); }
+}
+
+@keyframes heroFade {
+  from { opacity:0; transform:translateY(22px); }
+  to   { opacity:1; transform:none; }
+}
+
+/* ── ORNAMENTAL RULE ─────────────────────────────────────── */
+.orn-rule {
+  display:flex; align-items:center; gap:14px;
+  margin: 0 auto 32px;
+  max-width:480px;
+}
+.orn-rule::before, .orn-rule::after {
+  content:''; flex:1; height:1px;
+  background:linear-gradient(90deg,transparent,var(--border2),transparent);
+}
+.orn-glyph {
+  font-family:'Cinzel',serif; font-size:12px;
+  color:var(--gold2); letter-spacing:.22em; white-space:nowrap;
+}
+
+/* ── CONTENT SECTIONS ────────────────────────────────────── */
+.section {
+  max-width:1180px; margin:0 auto;
+  padding:60px 40px; position:relative; z-index:1;
+}
+.divider { border-top:1px solid var(--border); }
+
+.section-header {
+  display:flex; align-items:center; gap:14px; margin-bottom:32px;
+}
+.section-title {
+  font-family:'Cinzel',serif; font-size:21px; font-weight:700;
+  color:var(--ink); letter-spacing:.1em; white-space:nowrap;
+}
+.section-rule { flex:1; height:1px; background:linear-gradient(90deg,var(--border2),transparent); }
+.section-meta { font-family:'Cinzel',serif; font-size:11px; color:var(--ink4); letter-spacing:.1em; }
+
+/* ── OVERALL PROGRESS ────────────────────────────────────── */
+.progress-label {
+  font-family:'Cinzel',serif; font-size:10px;
+  letter-spacing:.2em; color:var(--ink4); margin-bottom:8px;
+}
+.progress-track {
+  height:5px; background:var(--parch3);
+  border:1px solid var(--border); overflow:hidden; margin-bottom:40px;
+}
+.progress-fill {
+  height:100%; background:linear-gradient(90deg,var(--gold),var(--gold4));
+  transition:width 1.4s cubic-bezier(.4,0,.2,1); position:relative;
+}
+.progress-fill::after {
+  content:''; position:absolute; right:-1px; top:-3px;
+  width:9px; height:9px; border-radius:50%;
+  background:var(--gold4); box-shadow:0 0 8px var(--gold3);
+}
+
+/* ── GROUP GRID ──────────────────────────────────────────── */
+.groups-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+  gap:14px;
+}
+
+.group-card {
+  background:var(--parch2); border:1.5px solid var(--border);
+  cursor:pointer; transition:border-color .2s, box-shadow .2s, transform .2s;
+  position:relative; overflow:hidden;
+}
+.group-card:hover {
+  border-color:var(--border2); transform:translateY(-2px);
+  box-shadow:0 8px 32px var(--shadow);
+}
+.group-card::after {
+  content:''; position:absolute; top:0; left:0;
+  border-top:18px solid var(--parch4); border-right:18px solid transparent; opacity:.45;
+}
+
+.gc-head {
+  padding:16px 18px 12px; display:flex;
+  align-items:flex-start; gap:11px; border-bottom:1px solid var(--border);
+}
+.gc-icon { font-size:20px; line-height:1; flex-shrink:0; margin-top:2px; }
+.gc-name {
+  font-family:'Cinzel',serif; font-size:14px; font-weight:600;
+  color:var(--ink); letter-spacing:.04em; margin-bottom:3px;
+}
+.gc-phase { font-size:12.5px; color:var(--ink4); font-style:italic; }
+.gc-badge {
+  margin-left:auto; font-family:'Cinzel',serif; font-size:9px;
+  letter-spacing:.1em; padding:2px 7px; border:1px solid; white-space:nowrap; align-self:flex-start;
+}
+.gc-badge.complete { border-color:var(--teal2); color:var(--teal2); }
+.gc-badge.active   { border-color:var(--gold2); color:var(--gold2); }
+
+.gc-mini-bar {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 18px; background:var(--parch3); border-bottom:1px solid var(--border);
+}
+.gc-mini-track { flex:1; height:3px; background:rgba(139,105,20,.15); }
+.gc-mini-fill  { height:100%; background:linear-gradient(90deg,var(--gold),var(--gold3)); transition:width .7s ease; }
+.gc-mini-pct   { font-family:'Cinzel',serif; font-size:10px; color:var(--ink4); letter-spacing:.1em; white-space:nowrap; }
+
+.gc-tasks { padding:10px 18px; }
+.task-preview-row {
+  display:flex; align-items:center; gap:9px;
+  padding:5px 0; border-bottom:1px dotted rgba(139,105,20,.1);
+  font-size:14.5px; color:var(--ink2);
+}
+.task-preview-row:last-child { border-bottom:none; }
+.task-preview-row.t-done    { color:var(--teal); }
+.task-preview-row.t-wip     { color:var(--gold2); }
+.task-preview-row.t-planned { color:var(--ink4); }
+.t-rune { font-size:10.5px; width:13px; flex-shrink:0; text-align:center; }
+.t-assignee {
+  margin-left:auto; font-family:'Cinzel',serif; font-size:10px;
+  color:var(--ink4); letter-spacing:.04em;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80px;
+}
+.gc-expand {
+  width:100%; padding:9px 18px; background:none;
+  border:none; border-top:1px solid var(--border);
+  font-family:'Cinzel',serif; font-size:10px; letter-spacing:.14em;
+  color:var(--ink4); cursor:pointer; transition:background .2s,color .2s; text-align:center;
+}
+.gc-expand:hover { background:var(--parch3); color:var(--gold2); }
+
+/* ── SPRINT ──────────────────────────────────────────────── */
+.sprint-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:10px;
+}
+.sprint-card {
+  background:var(--parch2); border:1.5px solid var(--border);
+  padding:14px 18px; display:flex;
+  justify-content:space-between; align-items:center;
+  position:relative; transition:border-color .2s;
+}
+.sprint-card:hover { border-color:var(--border2); }
+.sprint-card::before {
+  content:''; position:absolute; left:0; top:18%; bottom:18%;
+  width:2px; background:var(--gold2);
+}
+.sprint-task { font-family:'Cinzel',serif; font-size:13px; color:var(--ink); letter-spacing:.04em; margin-bottom:2px; }
+.sprint-group { font-size:13px; color:var(--ink4); font-style:italic; }
+.sprint-who {
+  font-family:'Cinzel',serif; font-size:10px;
+  color:var(--ink4); border:1px solid var(--border);
+  padding:3px 9px; letter-spacing:.06em; white-space:nowrap;
+}
+
+/* ── TEAM ────────────────────────────────────────────────── */
+.team-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:12px;
+}
+.member-card {
+  background:var(--parch2); border:1.5px solid var(--border);
+  padding:28px; text-align:center;
+  transition:all .2s; position:relative; overflow:hidden;
+}
+.member-card:hover { border-color:var(--border2); box-shadow:0 6px 24px var(--shadow); transform:translateY(-2px); }
+.member-card::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold2),transparent);
+  opacity:0; transition:opacity .3s;
+}
+.member-card:hover::after { opacity:1; }
+.member-initial {
+  width:50px; height:50px; border:2px solid var(--border2); background:var(--parch3);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Cinzel',serif; font-size:18px; color:var(--ink2);
+  margin:0 auto 14px;
+}
+.member-name  { font-family:'Cinzel',serif; font-size:14px; font-weight:600; color:var(--ink); letter-spacing:.05em; margin-bottom:3px; }
+.member-title { font-size:13px; color:var(--ink4); font-style:italic; }
+
+/* ── EMPTY / LOADING ─────────────────────────────────────── */
+.empty-scroll {
+  padding:36px; text-align:center; font-style:italic;
+  color:var(--ink4); border:1px dashed var(--border);
+}
+.skel {
+  background:linear-gradient(90deg,var(--parch2) 25%,var(--parch3) 50%,var(--parch2) 75%);
+  background-size:200% 100%; animation:shim 1.4s infinite; opacity:.6;
+}
+@keyframes shim { from{background-position:200% 0} to{background-position:-200% 0} }
+
+/* ── DOWNLOAD SECTION ────────────────────────────────────── */
+#download { padding:80px 40px; max-width:1000px; margin:0 auto; }
+
+.dl-hero-eyebrow { font-family:'Cinzel',serif; font-size:9.5px; letter-spacing:.38em; color:var(--ink4); margin-bottom:10px; text-transform:uppercase; text-align:center; }
+.dl-hero-title   { font-family:'Cinzel Decorative',serif; font-size:clamp(26px,4vw,42px); font-weight:700; color:var(--ink); letter-spacing:.04em; line-height:1; margin-bottom:10px; text-align:center; }
+.dl-hero-sub     { font-family:'IM Fell English',serif; font-style:italic; font-size:17px; color:var(--ink3); margin-bottom:40px; text-align:center; max-width:540px; margin-left:auto; margin-right:auto; }
+
+.os-strip { display:inline-flex; gap:0; border:1.5px solid var(--border2); margin-bottom:32px; position:relative; }
+.os-btn {
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:18px 36px; background:var(--parch2); border:none;
+  border-right:1px solid var(--border); cursor:pointer; transition:all .2s;
+  font-family:'Cinzel',serif; position:relative; overflow:hidden; min-width:180px;
+}
+.os-btn:last-child { border-right:none; }
+.os-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,var(--gold) 0%,var(--gold2) 100%); opacity:0; transition:opacity .25s; }
+.os-btn:hover::before { opacity:1; }
+.os-btn:hover .os-label, .os-btn:hover .os-icon, .os-btn:hover .os-ver { color:var(--parch); }
+.os-btn.recommended { background:linear-gradient(135deg,var(--ink) 0%,var(--ink2) 100%); }
+.os-btn.recommended .os-label, .os-btn.recommended .os-icon, .os-btn.recommended .os-ver { color:var(--parch); }
+.os-btn.recommended::after { content:'RECOMMENDED'; position:absolute; top:0; right:0; font-family:'Cinzel',serif; font-size:7.5px; letter-spacing:.14em; background:var(--gold2); color:var(--ink); padding:3px 8px; }
+.os-icon  { font-size:24px; position:relative; z-index:1; color:var(--ink3); transition:color .2s; }
+.os-label { font-size:11px; letter-spacing:.14em; color:var(--ink2); position:relative; z-index:1; transition:color .2s; }
+.os-ver   { font-size:9px; letter-spacing:.08em; color:var(--ink4); font-family:'Crimson Pro',serif; position:relative; z-index:1; transition:color .2s; }
+
+.reqs-strip { display:flex; justify-content:center; gap:28px; flex-wrap:wrap; margin-bottom:56px; }
+.req-item { font-family:'Cinzel',serif; font-size:9.5px; letter-spacing:.12em; color:var(--ink4); display:flex; align-items:center; gap:7px; }
+.req-item::before { content:''; width:4px; height:4px; background:var(--gold2); opacity:.6; display:inline-block; }
+
+.dl-steps { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:2px; margin-bottom:56px; }
+.dl-step-card { background:var(--parch2); border:1px solid var(--border); padding:26px 22px; position:relative; }
+.dl-step-num  { font-family:'Cinzel Decorative',serif; font-size:44px; font-weight:700; color:rgba(139,105,20,.1); line-height:1; position:absolute; top:14px; right:18px; }
+.dl-step-icon  { font-size:20px; margin-bottom:10px; display:block; }
+.dl-step-title { font-family:'Cinzel',serif; font-size:12px; letter-spacing:.06em; color:var(--ink); margin-bottom:7px; }
+.dl-step-body  { font-size:14.5px; color:var(--ink3); line-height:1.65; }
+.dl-center { display:flex; flex-direction:column; align-items:center; }
+
+.release-card { background:var(--parch2); border:1px solid var(--border2); overflow:hidden; margin-bottom:56px; width:100%; }
+.release-head { background:linear-gradient(to right,var(--ink2),var(--ink)); padding:14px 22px; display:flex; align-items:center; justify-content:space-between; }
+.release-title { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.14em; color:var(--gold3); }
+.release-badge { font-family:'Cinzel',serif; font-size:9px; letter-spacing:.14em; padding:3px 10px; border:1px solid var(--gold2); color:var(--gold3); }
+.release-body  { padding:18px 22px; }
+.release-row   { display:grid; grid-template-columns:1fr 110px 110px 130px; gap:14px; align-items:center; padding:11px 0; border-bottom:1px solid var(--border); font-size:14px; }
+.release-row:last-child { border-bottom:none; }
+.release-row.header { font-family:'Cinzel',serif; font-size:9px; letter-spacing:.14em; color:var(--ink4); padding-bottom:8px; }
+.release-name { color:var(--ink2); font-weight:600; }
+.release-ver  { color:var(--ink4); font-family:'Cinzel',serif; font-size:10px; }
+.release-date { color:var(--ink4); font-size:13px; }
+.btn-dl { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:var(--ink2); border:1px solid var(--border2); color:var(--parch); font-family:'Cinzel',serif; font-size:10px; letter-spacing:.1em; cursor:pointer; transition:all .2s; text-decoration:none; white-space:nowrap; }
+.btn-dl:hover { background:var(--ink); border-color:var(--gold2); }
+
+.dl-auth-wall { background:var(--parch2); border:1.5px solid var(--border2); padding:30px; text-align:center; margin-bottom:56px; }
+.dl-auth-wall .lock { font-size:26px; margin-bottom:10px; display:block; }
+.dl-auth-wall-title { font-family:'Cinzel',serif; font-size:15px; letter-spacing:.06em; color:var(--ink); margin-bottom:8px; }
+.dl-auth-wall p { font-style:italic; color:var(--ink3); margin-bottom:18px; }
+.btn-dl-primary { display:inline-flex; align-items:center; gap:8px; padding:11px 28px; background:linear-gradient(135deg,var(--ink) 0%,var(--ink2) 100%); border:1.5px solid var(--gold2); color:var(--parch); font-family:'Cinzel',serif; font-size:11px; letter-spacing:.16em; cursor:pointer; transition:all .2s; text-decoration:none; }
+.btn-dl-primary:hover { border-color:var(--gold4); box-shadow:0 4px 20px rgba(139,105,20,.3); }
+
+.dl-faq-list { display:flex; flex-direction:column; gap:2px; }
+.dl-faq-item { background:var(--parch2); border:1px solid var(--border); overflow:hidden; }
+.dl-faq-q { width:100%; padding:15px 18px; background:none; border:none; font-family:'Cinzel',serif; font-size:12px; letter-spacing:.06em; color:var(--ink); text-align:left; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:background .15s; }
+.dl-faq-q:hover { background:var(--parch3); }
+.dl-faq-arrow { color:var(--gold2); transition:transform .2s; }
+.dl-faq-item.open .dl-faq-arrow { transform:rotate(90deg); }
+.dl-faq-a { display:none; padding:0 18px 14px; color:var(--ink3); font-size:15px; line-height:1.7; border-top:1px solid var(--border); }
+.dl-faq-item.open .dl-faq-a { display:block; }
+
+/* ── SUPPORT ─────────────────────────────────────────────── */
+#support { padding:80px 40px; max-width:1000px; margin:0 auto; }
+.support-box { display:flex; flex-direction:row; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap; }
+
+.gofundme-support-button {
+  display:inline-flex; align-items:center; justify-content:space-between; gap:18px;
+  background:#035a31; color:white; text-decoration:none;
+  font-family:Inter,sans-serif; font-weight:600; font-size:15px;
+  padding:8px 18px; border-radius:12px; min-width:260px;
+  box-shadow:0 4px 14px rgba(3,90,49,.35);
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+.gofundme-support-button:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(3,90,49,.45); }
+.gofundme-badge img { height:16px; width:auto; display:block; }
+
+.stripe-support-button {
+  display:inline-flex; align-items:center; justify-content:space-between; gap:18px;
+  background:#635bff; color:white; text-decoration:none;
+  font-family:Inter,sans-serif; font-weight:600; font-size:15px;
+  padding:8px 18px; border-radius:12px; min-width:260px;
+  box-shadow:0 4px 14px rgba(99,91,255,.35);
+  transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.stripe-support-button:hover { background:#5851e6; transform:translateY(-1px); box-shadow:0 6px 20px rgba(99,91,255,.45); }
+.stripe-badge img { height:16px; width:auto; display:block; }
+
+/* ── GROUP MODAL ─────────────────────────────────────────── */
+.overlay { position:fixed; inset:0; z-index:500; background:rgba(26,18,8,.65); display:none; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(3px); }
+.overlay.open { display:flex; }
+.modal-scroll { background:var(--parch2); border:2px solid var(--border2); max-width:660px; width:100%; max-height:88vh; overflow-y:auto; box-shadow:0 24px 64px var(--shadow2); animation:unroll .28s cubic-bezier(.34,1.56,.64,1); }
+@keyframes unroll { from{opacity:0;transform:scaleY(.88) translateY(-20px)} to{opacity:1;transform:none} }
+.modal-bar { background:var(--parch3); border-bottom:1.5px solid var(--border2); padding:16px 22px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:10; }
+.modal-close { background:none; border:1px solid var(--border); width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; color:var(--ink3); margin-left:auto; transition:background .15s; }
+.modal-close:hover { background:var(--parch4); }
+.modal-body { padding:22px 24px; }
+.modal-progress-wrap { margin-bottom:18px; }
+.modal-mini-track { height:4px; background:var(--parch3); border:1px solid var(--border); overflow:hidden; }
+.modal-mini-fill  { height:100%; background:linear-gradient(90deg,var(--gold),var(--gold3)); transition:width .8s ease; }
+.modal-pct-row { display:flex; justify-content:space-between; font-family:'Cinzel',serif; font-size:10px; color:var(--ink4); letter-spacing:.1em; margin-top:5px; }
+.modal-desc { font-style:italic; color:var(--ink3); font-size:15.5px; padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid var(--border); }
+.modal-task { display:flex; align-items:center; gap:11px; padding:11px 14px; background:var(--parch); border:1px solid var(--border); margin-bottom:2px; transition:background .15s; position:relative; }
+.modal-task:hover { background:var(--parch3); }
+.modal-task.t-done    { border-left:3px solid var(--teal2); }
+.modal-task.t-wip     { border-left:3px solid var(--gold2); }
+.modal-task.t-planned { border-left:3px solid transparent; }
+.modal-task-name { flex:1; font-size:15.5px; color:var(--ink2); }
+.modal-task.t-done .modal-task-name { color:var(--teal); text-decoration:line-through; text-decoration-color:rgba(45,107,90,.4); }
+.modal-task.t-wip  .modal-task-name { color:var(--gold2); }
+.modal-task-state { font-family:'Cinzel',serif; font-size:9.5px; letter-spacing:.12em; padding:2px 8px; border:1px solid; }
+.modal-task.t-done    .modal-task-state { border-color:var(--teal); color:var(--teal); }
+.modal-task.t-wip     .modal-task-state { border-color:var(--gold2); color:var(--gold2); }
+.modal-task.t-planned .modal-task-state { border-color:var(--border2); color:var(--ink4); }
+.modal-task-who { font-family:'Cinzel',serif; font-size:10px; color:var(--ink4); letter-spacing:.05em; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.subtask-toggle { background:none; border:none; cursor:pointer; font-family:'Cinzel',serif; font-size:9.5px; color:var(--ink4); letter-spacing:.1em; padding:2px 6px; transition:color .15s; }
+.subtask-toggle:hover { color:var(--gold2); }
+.subtask-list { padding:8px 14px 10px 40px; background:var(--parch3); border-left:1px solid var(--border); margin-bottom:2px; display:none; }
+.subtask-list.open { display:block; }
+.subtask-item { display:flex; align-items:center; gap:8px; padding:4px 0; font-size:14px; color:var(--ink3); border-bottom:1px dotted rgba(139,105,20,.1); }
+.subtask-item:last-child { border-bottom:none; }
+.subtask-item.done { color:var(--teal); text-decoration:line-through; text-decoration-color:rgba(45,107,90,.35); }
+.subtask-check { font-size:11px; color:var(--teal); }
+.subtask-open  { font-size:11px; color:var(--ink4); }
+
+/* ── AUTH MODAL ──────────────────────────────────────────── */
+.auth-overlay { position:fixed; inset:0; z-index:600; background:rgba(26,18,8,.75); display:none; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(4px); }
+.auth-overlay.open { display:flex; }
+.auth-box { background:var(--parch2); border:2px solid var(--border2); width:100%; max-width:420px; box-shadow:0 24px 64px var(--shadow2); animation:unroll .28s cubic-bezier(.34,1.56,.64,1); }
+.auth-head { background:var(--parch3); border-bottom:1.5px solid var(--border2); padding:24px 28px 18px; text-align:center; }
+.auth-title { font-family:'Cinzel Decorative',serif; font-size:18px; color:var(--ink); letter-spacing:.08em; margin-bottom:3px; }
+.auth-sub   { font-style:italic; font-size:13.5px; color:var(--ink4); }
+.auth-body  { padding:22px 26px; }
+.auth-tabs  { display:flex; gap:0; margin-bottom:22px; border:1px solid var(--border); }
+.auth-tab   { flex:1; padding:8px; text-align:center; font-family:'Cinzel',serif; font-size:10.5px; letter-spacing:.12em; color:var(--ink4); cursor:pointer; border:none; background:none; transition:all .2s; }
+.auth-tab.active { background:var(--parch3); color:var(--ink); border-bottom:2px solid var(--gold2); }
+.field { margin-bottom:14px; }
+.field label { display:block; font-family:'Cinzel',serif; font-size:10px; letter-spacing:.16em; color:var(--ink4); margin-bottom:5px; }
+.field input { width:100%; background:var(--parch); border:1.5px solid var(--border); color:var(--ink); padding:9px 13px; font-family:'Crimson Pro',serif; font-size:16px; outline:none; transition:border-color .2s; }
+.field input:focus { border-color:var(--gold2); }
+.auth-btn { width:100%; padding:12px; background:var(--ink2); color:var(--parch); border:none; font-family:'Cinzel',serif; font-size:11.5px; letter-spacing:.12em; cursor:pointer; transition:background .2s; margin-bottom:10px; }
+.auth-btn:hover { background:var(--ink); }
+.auth-msg { font-family:'Cinzel',serif; font-size:11px; color:var(--blood); text-align:center; min-height:18px; letter-spacing:.06em; }
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+footer {
+  border-top:2px solid var(--border2); padding:28px 48px;
+  background:var(--parch3); display:flex;
+  justify-content:space-between; align-items:center;
+  position:relative; z-index:1;
+}
+footer::before {
+  content:'⸻ ❧ ⸻'; position:absolute; top:-12px; left:50%;
+  transform:translateX(-50%); background:var(--parch3);
+  padding:0 16px; font-size:13px; color:var(--gold2); letter-spacing:.2em;
+}
+.footer-logo  { font-family:'Cinzel',serif; font-size:14px; letter-spacing:.12em; color:var(--ink2); }
+.footer-right { font-family:'Cinzel',serif; font-size:10.5px; letter-spacing:.1em; color:var(--ink4); }
+
+.hidden { display:none !important; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media(max-width:860px) {
+  header { padding:0 16px; }
+  nav    { display:none; }
+  .section { padding:36px 18px; }
+  .groups-grid { grid-template-columns:1fr; }
+  .update-entry { grid-template-columns:1fr; gap:6px; }
+  .update-date  { border-right:none; padding-right:0; border-bottom:1px solid var(--border); padding-bottom:6px; }
+  footer { flex-direction:column; gap:8px; text-align:center; padding:22px 18px; }
+  .hero-stats { flex-direction:column; gap:0; }
+  .hero-stat { border-right:none; border-bottom:1px solid rgba(240,200,58,.2); }
+  .hero-stat:last-child { border-bottom:none; }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .hero-bg, .hero-logo-img, .hero-tagline, .hero-eyebrow,
+  .hero-stats, .hero-cta, .pt-badge, .hero-scroll-cue { animation:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<header id="site-header">
+  <a class="logo" href="index.html">
+    <div class="logo-mark">⚒</div>
+    PROJECT IRONVEIL
+  </a>
+  <nav>
+    <a href="community.html">The Forge</a>
+    <a href="#team">Fellowship</a>
+    <a href="#download">Download</a>
+    <a href="supporter.html" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.16em;color:rgba(255,255,255,.75);text-decoration:none;transition:color .3s;margin-left:32px;border:1px solid rgba(240,200,58,.35);padding:5px 14px;background:rgba(139,105,20,.2);">⚒ Become a Kindler</a>
+  </nav>
+  <div class="header-right" id="header-right">
+    <button class="btn ghost" onclick="openAuth()">⬡ Sign In / Join</button>
+  </div>
+</header>
+
+<!-- ══ CINEMATIC HERO ══════════════════════════════════════ -->
+<div class="hero-shell" id="hero-shell">
+  <div class="hero-bg" id="hero-bg"></div>
+  <div class="hero-vignette"></div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">Open Development · VR Crafting RPG · Built in Public</div>
+
+    <!-- title logo image -->
+    <img
+      class="hero-logo-img"
+      src="ironveiltitle.png"
+      alt="Ironveil"
+    >
+
+    <p class="hero-tagline">Forge Your Legend in Iron and Fire</p>
+
+    <div class="hero-cta">
+      <a href="community.html" class="btn ghost">⚒ The Forge</a>
+      <a href="#download" class="btn ghost">⬇ Download</a>
+    </div>
+
+    <div class="pt-badge">
+      <div class="pt-pip" id="pt-pip"></div>
+      <span id="pt-text">Checking status…</span>
+    </div>
+  </div>
+
+  <div class="hero-scroll-cue">
+    <span>SCROLL</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</div>
+
+<!-- ── THE FORGE CTA ─────────────────────────────────────── -->
+<div class="divider"></div>
+<div class="section" id="forge-cta" style="text-align:center;padding:4rem 2rem">
+  <div style="display:inline-flex;align-items:center;gap:14px;margin-bottom:20px">
+    <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border2));width:80px"></div>
+    <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold2);letter-spacing:.22em">⚒</div>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);width:80px"></div>
+  </div>
+  <h2 style="font-family:'Cinzel Decorative',serif;font-size:clamp(22px,3.5vw,36px);color:var(--ink);letter-spacing:.04em;margin-bottom:14px">The Forge</h2>
+  <p style="font-family:'IM Fell English',serif;font-style:italic;font-size:18px;color:var(--ink3);max-width:500px;margin:0 auto 28px;line-height:1.6">
+    Roadmap, devlogs, patch notes, the community — everything about how Ironveil gets built.
+  </p>
+  <a href="community.html" class="btn primary" style="text-decoration:none;display:inline-flex;padding:13px 32px;font-size:12px;letter-spacing:.18em">
+    <span>⚒ Enter The Forge →</span>
+  </a>
+</div>
+
+<!-- ── TEAM ────────────────────────────────────────────────── -->
+<div class="divider"></div>
+<div class="section" id="team">
+  <div class="section-header">
+    <h2 class="section-title">The Fellowship</h2>
+    <div class="section-rule"></div>
+  </div>
+  <div class="team-grid" id="team-grid">
+    <div class="member-card"><div class="skel" style="width:50px;height:50px;margin:0 auto 14px"></div><div class="skel" style="width:70%;margin:auto"></div></div>
+  </div>
+</div>
+
+<!-- ── DOWNLOAD ─────────────────────────────────────────────── -->
+<div class="divider"></div>
+<section id="download">
+  <div class="dl-center">
+    <div class="dl-hero-eyebrow">Early Access · VR Crafting RPG</div>
+    <h2 class="dl-hero-title">Download the Launcher</h2>
+    <p class="dl-hero-sub">The forge awaits — install the Ironveil Launcher to receive game builds, updates, and announcements directly.</p>
+
+    <div class="os-strip" id="dl-os-strip">
+      <button class="os-btn" id="dl-btn-win" onclick="downloadLauncher('windows')">
+        <span class="os-icon">🪟</span>
+        <span class="os-label">WINDOWS</span>
+        <span class="os-ver" id="dl-win-ver">v1.0.0 · Windows 10/11 · 64-bit</span>
+      </button>
+      <button class="os-btn" id="dl-btn-mac" disabled style="opacity:.45;cursor:not-allowed">
+        <span class="os-icon">🍎</span>
+        <span class="os-label">macOS</span>
+        <span class="os-ver">Coming Soon</span>
+      </button>
+    </div>
+
+    <div class="reqs-strip">
+      <div class="req-item">Windows 10 / macOS 12+</div>
+      <div class="req-item">VR: Meta Quest 2/3 or PCVR</div>
+      <div class="req-item">4 GB RAM minimum</div>
+      <div class="req-item">2 GB free disk space</div>
+    </div>
+  </div>
+
+  <div class="section-header" style="margin-bottom:20px">
+    <h2 class="section-title">How It Works</h2>
+    <div class="section-rule"></div>
+  </div>
+  <div class="dl-steps">
+    <div class="dl-step-card"><span class="dl-step-num">1</span><span class="dl-step-icon">⬇</span><div class="dl-step-title">Download the Launcher</div><p class="dl-step-body">Click your platform above to download the Ironveil Launcher installer. Run it once to install — no configuration needed.</p></div>
+    <div class="dl-step-card"><span class="dl-step-num">2</span><span class="dl-step-icon">⚒</span><div class="dl-step-title">Sign In to the Forge</div><p class="dl-step-body">Open the launcher and sign in with your Ironveil account. Create one here — access is granted when a playtest slot opens.</p></div>
+    <div class="dl-step-card"><span class="dl-step-num">3</span><span class="dl-step-icon">▶</span><div class="dl-step-title">Install & Play</div><p class="dl-step-body">Once access is granted, the launcher shows an Install button, downloads the latest build, and lets you launch straight in.</p></div>
+  </div>
+
+  <div id="dl-game-section" class="hidden">
+    <div class="section-header" style="margin-bottom:20px"><h2 class="section-title">Game Builds</h2><div class="section-rule"></div></div>
+    <div class="release-card">
+      <div class="release-head"><span class="release-title">AVAILABLE BUILDS</span><span class="release-badge" id="dl-build-count">Loading…</span></div>
+      <div class="release-body">
+        <div class="release-row header"><div>Build</div><div>Version</div><div>Released</div><div>Download</div></div>
+        <div id="dl-builds-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dl-auth-wall">
+    <div class="section-header" style="margin-bottom:20px"><h2 class="section-title">Game Builds</h2><div class="section-rule"></div></div>
+    <div class="dl-auth-wall">
+      <span class="lock">🔒</span>
+      <div class="dl-auth-wall-title">Sign In to Access Game Builds</div>
+      <p>Game builds are only available to authorised playtesters. Sign in to check your access status.</p>
+      <button class="btn-dl-primary" onclick="openAuth()">⬡ Sign In to the Forge</button>
+    </div>
+  </div>
+
+  <div id="dl-no-access-wall" class="hidden">
+    <div class="section-header" style="margin-bottom:20px"><h2 class="section-title">Game Builds</h2><div class="section-rule"></div></div>
+    <div class="dl-auth-wall">
+      <span class="lock">⏳</span>
+      <div class="dl-auth-wall-title">Access Pending</div>
+      <p>Your account is registered, but playtest access hasn't been granted yet. A developer will open the gates when a slot becomes available.</p>
+    </div>
+  </div>
+
+  <div class="section-header" style="margin-bottom:20px;margin-top:48px"><h2 class="section-title">Questions</h2><div class="section-rule"></div></div>
+  <div class="dl-faq-list">
+    <div class="dl-faq-item"><button class="dl-faq-q" onclick="toggleDlFaq(this)">Do I need a VR headset to play? <span class="dl-faq-arrow">▸</span></button><div class="dl-faq-a">During the current alpha, a VR headset is required. Meta Quest 2 and Meta Quest 3 are officially supported, along with PCVR via Steam Link.</div></div>
+    <div class="dl-faq-item"><button class="dl-faq-q" onclick="toggleDlFaq(this)">How do I get a playtest invite? <span class="dl-faq-arrow">▸</span></button><div class="dl-faq-a">Create an account and a developer will review it and grant access manually. Spots open in waves — watch the Development Scrolls for announcements.</div></div>
+    <div class="dl-faq-item"><button class="dl-faq-q" onclick="toggleDlFaq(this)">Will the launcher auto-update the game? <span class="dl-faq-arrow">▸</span></button><div class="dl-faq-a">Yes. When a new build is released, the launcher shows an Update button and downloads it automatically.</div></div>
+    <div class="dl-faq-item"><button class="dl-faq-q" onclick="toggleDlFaq(this)">Is my data safe? <span class="dl-faq-arrow">▸</span></button><div class="dl-faq-a">Accounts are secured through Supabase Auth. The launcher stores a session token locally — your password is never saved.</div></div>
+  </div>
+</section>
+
+<!-- ── SUPPORT ──────────────────────────────────────────────── -->
+<div class="divider"></div>
+<section id="support">
+  <div class="section-header" style="margin-bottom:20px">
+    <h2 class="section-title">Keep the Forge Burning</h2>
+    <div class="section-rule"></div>
+  </div>
+  <div class="support-box">
+    <a class="gofundme-support-button" href="https://www.gofundme.com/f/fund-the-development-of-ironveil" target="_blank">
+      <span>Fund Ironveil</span>
+      <div class="gofundme-badge"><img src="GoFundMe_logo.png" alt="GoFundMe"></div>
+    </a>
+    <a class="stripe-support-button" href="https://donate.stripe.com/9B6aEX3pGerm5M0buU2oE00" target="_blank">
+      <span>Support Ironveil</span>
+      <div class="stripe-badge"><img src="1685814419stripe-logo-white.png" alt="Stripe"></div>
+    </a>
+    <script src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
+    <script>kofiwidget2.init('Support the forge on Ko-fi','#8b5a2b','I1H5212LN3');kofiwidget2.draw();</script>
+  </div>
+</section>
+
+<!-- ── FOOTER ──────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-logo">⚒ PROJECT IRONVEIL</div>
+  <div class="footer-right">2026 FullStack-Beck All Rights Reserved</div>
+</footer>
+
+<!-- ── AUTH MODAL ─────────────────────────────────────────── -->
+<div class="auth-overlay" id="auth-overlay" onclick="closeAuth(event)">
+  <div class="auth-box">
+    <div class="auth-head">
+      <div class="auth-title">Ironveil</div>
+      <div class="auth-sub">Join the open development</div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-in" onclick="switchTab('in')">Sign In</button>
+        <button class="auth-tab" id="tab-up" onclick="switchTab('up')">Join</button>
+      </div>
+      <div id="form-in">
+        <div class="field"><label>Email</label><input type="email" id="in-email" placeholder="your@email.com"></div>
+        <div class="field"><label>Password</label><input type="password" id="in-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSignIn()"></div>
+        <button class="auth-btn" onclick="doSignIn()">Enter the Forge</button>
+      </div>
+      <div id="form-up" style="display:none">
+        <div class="field"><label>Display Name</label><input type="text" id="up-name" placeholder="Your name or alias"></div>
+        <div class="field"><label>Email</label><input type="email" id="up-email" placeholder="your@email.com"></div>
+        <div class="field"><label>Password</label><input type="password" id="up-pass" placeholder="Min. 6 characters" onkeydown="if(event.key==='Enter')doSignUp()"></div>
+        <button class="auth-btn" onclick="doSignUp()">Pledge Your Name</button>
+      </div>
+      <div class="auth-msg" id="auth-msg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── CONFIG ──────────────────────────────────────────────── */
+const SUPABASE_URL = 'https://tzehikqnnzaykyaomzer.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6ZWhpa3FubnpheWt5YW9temVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3OTMxMzMsImV4cCI6MjA5NjM2OTEzM30.Trm5ha1xSr5MvQ-s3AKDdcBncdVCH_xi3CjhVfQaLfo';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+});
+
+/* ── STATE ───────────────────────────────────────────────── */
+let user=null, profile=null;
+let groupsCache=[], tasksCache=[], subtasksCache=[];
+
+/* ── HEADER SCROLL BEHAVIOUR ─────────────────────────────── */
+const hdr = document.getElementById('site-header');
+window.addEventListener('scroll', () => {
+  hdr.classList.toggle('scrolled', window.scrollY > 60);
+}, { passive:true });
+
+/* ── PARALLAX ────────────────────────────────────────────── */
+const heroBg = document.getElementById('hero-bg');
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  heroBg.style.transform = `translateY(${y * 0.38}px)`;
+}, { passive:true });
+
+/* ── AUTH ────────────────────────────────────────────────── */
+async function initAuth() {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (session?.user) {
+    user = session.user;
+    const { data } = await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+    profile = data;
+    renderHeader(); closeAuth(); initDownloadSection();
+  } else { initDownloadSection(); }
+
+  sb.auth.onAuthStateChange(async (event,session) => {
+    if (event==='SIGNED_OUT') { user=null; profile=null; renderHeader(); initDownloadSection(); }
+    else if (event==='SIGNED_IN' && !user) {
+      user=session.user;
+      const { data } = await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+      profile=data; renderHeader(); closeAuth(); initDownloadSection();
+    }
+  });
+}
+initAuth();
+
+function renderHeader() {
+  const el = document.getElementById('header-right');
+  if (user && profile) {
+    const name = profile.display_name || user.email.split('@')[0];
+    const canAdmin = profile.role==='developer'||profile.role==='admin';
+    el.innerHTML = `
+      <a class="user-chip" href="profile.html">⚒ ${name}</a>
+      ${canAdmin?`<a class="btn ghost" href="admin.html">⬡ Dev Portal</a>`:''}
+      <button class="btn ghost" onclick="doSignOut()">Sign Out</button>
+    `;
+  } else {
+    el.innerHTML = `<button class="btn ghost" onclick="openAuth()">⬡ Sign In / Join</button>`;
+  }
+}
+
+async function doSignIn() {
+  const email=document.getElementById('in-email').value.trim();
+  const pass=document.getElementById('in-pass').value;
+  setAuthMsg('');
+  const { error } = await sb.auth.signInWithPassword({ email, password:pass });
+  if (error) setAuthMsg(error.message);
+}
+async function doSignUp() {
+  const name=document.getElementById('up-name').value.trim();
+  const email=document.getElementById('up-email').value.trim();
+  const pass=document.getElementById('up-pass').value;
+  setAuthMsg('');
+  if(!name){setAuthMsg('Display name required.');return;}
+  const { error } = await sb.auth.signUp({ email, password:pass, options:{ data:{ display_name:name } } });
+  if(error){setAuthMsg(error.message);return;}
+  document.getElementById('auth-msg').style.color='var(--teal2)';
+  setAuthMsg('Account forged! Signing you in…');
+}
+async function doSignOut(){ await sb.auth.signOut(); }
+function openAuth()  { document.getElementById('auth-overlay').classList.add('open'); }
+function closeAuth(e){ if(!e||e.target===document.getElementById('auth-overlay')){ document.getElementById('auth-overlay').classList.remove('open'); setAuthMsg(''); document.getElementById('auth-msg').style.color='var(--blood)'; } }
+function switchTab(t){ document.getElementById('form-in').style.display=t==='in'?'':'none'; document.getElementById('form-up').style.display=t==='up'?'':'none'; document.getElementById('tab-in').classList.toggle('active',t==='in'); document.getElementById('tab-up').classList.toggle('active',t==='up'); setAuthMsg(''); }
+function setAuthMsg(m){ document.getElementById('auth-msg').textContent=m; }
+
+/* ── DATA ────────────────────────────────────────────────── */
+async function loadAll(){
+  renderStats();
+}
+
+function renderStats(){
+  // Stats are no longer displayed on index - Codex is on community.html
+}
+
+/* ── TEAM ────────────────────────────────────────────────── */
+async function loadTeam(){
+  const { data }=await sb.from('profiles').select('*').eq('is_public',true).order('created_at');
+  const grid=document.getElementById('team-grid');
+  grid.innerHTML='';
+  if(!data?.length){ grid.innerHTML='<div class="empty-scroll" style="grid-column:1/-1">The fellowship has yet to reveal themselves.</div>'; return; }
+  data.forEach(m=>{
+    const init=(m.display_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const el=document.createElement('div');
+    el.className='member-card';
+    el.innerHTML=`<div class="member-initial">${init}</div><div class="member-name">${m.display_name||'(unnamed)'}</div><div class="member-title">${m.title||m.role||'Adventurer'}</div>`;
+    grid.appendChild(el);
+  });
+}
+
+/* ── PLAYTEST ────────────────────────────────────────────── */
+async function loadPlaytest(){
+  const { data }=await sb.from('playtest_status').select('*').maybeSingle();
+  const pip=document.getElementById('pt-pip');
+  const text=document.getElementById('pt-text');
+  if(!data){ text.textContent='Playtest info unavailable'; return; }
+  if(data.status==='open'){ pip.className='pt-pip open'; text.textContent=`Playtest Open${data.platform?' — '+data.platform:''}`; }
+  else if(data.status==='soon'){ pip.className='pt-pip soon'; text.textContent=`Playtest Coming Soon${data.eta?' · '+data.eta:''}`; }
+  else { pip.className='pt-pip'; text.textContent=data.notes||'Closed Alpha — Not Yet Accepting Players'; }
+}
+
+/* ── REALTIME ────────────────────────────────────────────── */
+function subscribeRealtime(){
+  sb.channel('public-feed')
+    .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},()=>loadTeam())
+    .on('postgres_changes',{event:'*',schema:'public',table:'playtest_status'},()=>loadPlaytest())
+    .subscribe();
+}
+
+/* ── DOWNLOAD ────────────────────────────────────────────── */
+const LAUNCHER_RELEASES={ windows:{ url:'https://github.com/FullStack-Beck/IronveilLauncher/releases/latest/download/IronveilSetup.exe', ver:'v1.0.0 · Windows 10/11 · 64-bit' } };
+const DL_ACCESS_ROLES=['developer','admin','tester'];
+let dlGithubToken=null;
+const GITHUB_OWNER='FullStack-Beck', GITHUB_REPO='IronveilLauncher';
+
+async function initDownloadSection(){
+  const ua=navigator.userAgent.toLowerCase();
+  if(ua.includes('windows'))document.getElementById('dl-btn-win')?.classList.add('recommended');
+  const hasAccess=user&&profile&&DL_ACCESS_ROLES.includes(profile.role);
+  document.getElementById('dl-auth-wall').classList.toggle('hidden',!!user);
+  document.getElementById('dl-no-access-wall').classList.toggle('hidden',!user||hasAccess);
+  document.getElementById('dl-game-section').classList.toggle('hidden',!hasAccess);
+  if(hasAccess){ await loadDlGithubToken(); await loadDlGameBuilds(); }
+}
+async function loadDlGithubToken(){ try{ const { data }=await sb.from('launcher_config').select('token').eq('id','github').maybeSingle(); if(data)dlGithubToken=data.token; }catch{} }
+function downloadLauncher(os){ const rel=LAUNCHER_RELEASES[os]; if(!rel?.url){alert('Launcher download not available yet.');return;} window.location.href=rel.url; }
+async function loadDlGameBuilds(){
+  const list=document.getElementById('dl-builds-list');
+  list.innerHTML=`<div style="font-style:italic;color:var(--ink4);padding:12px 0">Loading builds from the forge…</div>`;
+  if(!dlGithubToken){ list.innerHTML=`<div style="font-style:italic;color:var(--ink4);padding:12px 0">No builds available yet.</div>`; document.getElementById('dl-build-count').textContent='0 Builds'; return; }
+  try{
+    const res=await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`,{ headers:{ 'Authorization':`Bearer ${dlGithubToken}`,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28' } });
+    if(!res.ok)throw new Error(`GitHub API: ${res.status}`);
+    const releases=await res.json();
+    document.getElementById('dl-build-count').textContent=`${releases.length} Build${releases.length!==1?'s':''}`;
+    renderDlBuilds(releases);
+  }catch{ list.innerHTML=`<div style="font-style:italic;color:var(--ink4);padding:12px 0">Could not load builds — try again later.</div>`; }
+}
+function renderDlBuilds(releases){
+  const list=document.getElementById('dl-builds-list');
+  if(!releases.length){ list.innerHTML=`<div style="font-style:italic;color:var(--ink4);padding:12px 0">No builds released yet — watch the Scrolls.</div>`; return; }
+  list.innerHTML=releases.map(r=>{
+    const date=new Date(r.published_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const winAsset=r.assets?.find(a=>a.name.toLowerCase().endsWith('.exe'));
+    const macAsset=r.assets?.find(a=>a.name.toLowerCase().endsWith('.dmg'));
+    const makeBtn=(asset,label)=>asset?`<a class="btn-dl" href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/${r.tag_name}/${asset.name}"><span>⬇</span> ${label}</a>`:'';
+    return `<div class="release-row"><div><div class="release-name">${r.name||r.tag_name}</div><div style="font-size:13px;color:var(--ink4);margin-top:2px;font-style:italic">${r.body?.split('\n')[0]||''}</div></div><div class="release-ver">${r.tag_name}</div><div class="release-date">${date}</div><div style="display:flex;flex-direction:column;gap:4px">${makeBtn(winAsset,'Windows')||makeBtn(macAsset,'macOS')||'<span style="font-style:italic;color:var(--ink4);font-size:13px">No assets</span>'}</div></div>`;
+  }).join('');
+}
+function toggleDlFaq(btn){ btn.closest('.dl-faq-item').classList.toggle('open'); }
+
+/* ── INIT ────────────────────────────────────────────────── */
+(async()=>{
+  await Promise.all([loadTeam(),loadPlaytest()]);
+  subscribeRealtime();
+})();
+
+sb.auth.getSession().then(({data:{session}})=>{ if(session)sb.auth.setSession(session); });
+</script>
+</body>
+</html>

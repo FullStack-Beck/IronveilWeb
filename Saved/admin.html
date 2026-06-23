@@ -935,29 +935,6 @@ hr.rune-divider::after {
   color:var(--border2);
 }
 
-/* ─── IMAGE UPLOAD ZONE ──────────────────────────── */
-.img-upload-zone {
-  border:1.5px dashed var(--border2);
-  background:rgba(255,255,255,.3);
-  padding:20px;
-  text-align:center;
-  cursor:pointer;
-  transition:border-color .2s, background .2s;
-  min-height:100px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.img-upload-zone:hover, .img-upload-zone.drag-over {
-  border-color:var(--gold2);
-  background:rgba(200,150,42,.06);
-}
-.img-upload-placeholder {
-  display:flex; flex-direction:column; align-items:center; gap:4px;
-  pointer-events:none;
-}
-.img-upload-preview { display:flex; flex-direction:column; align-items:center; }
-
 /* ─── INLINE FORM ─────────────────────────────────── */
 .inline-add {
   display:flex;
@@ -1054,7 +1031,7 @@ hr.rune-divider::after {
 
       <div class="nav-section">Forge</div>
       <button class="nav-item" onclick="showPage('updates',this)">
-        <span class="nav-icon">⊞</span><span>Scrolls &amp; Changelog</span>
+        <span class="nav-icon">⊞</span><span>Dev Updates</span>
       </button>
       <button class="nav-item" onclick="showPage('team',this)">
         <span class="nav-icon">◉</span><span>Team</span>
@@ -1195,140 +1172,40 @@ hr.rune-divider::after {
       </div>
 
       <!-- ══ UPDATES ══ -->
-      <!-- ══ SCROLLS & CHANGELOG ══ -->
       <div class="page" id="page-updates">
-
-        <!-- Tab switcher -->
-        <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px">
-          <button class="scroll-tab active" id="stab-devlog" onclick="switchScrollTab('devlog')"
-            style="padding:10px 22px;background:none;border:none;border-bottom:2px solid var(--gold2);font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--gold);cursor:pointer;transition:all .2s;margin-bottom:-1px">
-            📜 DEVLOG SCROLLS
-          </button>
-          <button class="scroll-tab" id="stab-changelog" onclick="switchScrollTab('changelog')"
-            style="padding:10px 22px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--ink4);cursor:pointer;transition:all .2s;margin-bottom:-1px">
-            ⚙ CHANGELOG
-          </button>
-          <button class="scroll-tab" id="stab-all" onclick="switchScrollTab('all')"
-            style="padding:10px 22px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--ink4);cursor:pointer;transition:all .2s;margin-bottom:-1px">
-            ◈ ALL ENTRIES
-          </button>
-        </div>
-
-        <!-- DEVLOG TAB -->
-        <div id="scroll-devlog">
-          <div class="panel" style="margin-bottom:24px">
-            <div class="panel-header"><div class="panel-title">📜 Post a Development Scroll</div></div>
-            <div class="panel-body">
-              <div class="field"><label>Devlog Title</label>
-                <input type="text" id="dl-title" placeholder="e.g. Week 3 — Hand tracking prototype complete">
-              </div>
-              <div class="field"><label>Body</label>
-                <textarea id="dl-body" rows="6" placeholder="What was built, what broke, what's next. Markdown-friendly."></textarea>
-              </div>
-              <div class="field">
-                <label>Cover Image (optional)</label>
-                <div class="img-upload-zone" id="dl-img-zone" onclick="document.getElementById('dl-img-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleImgDrop(event,'dl')">
-                  <input type="file" id="dl-img-input" accept="image/*" style="display:none" onchange="handleImgPick(event,'dl')">
-                  <div class="img-upload-placeholder" id="dl-img-placeholder">
-                    <span style="font-size:24px">🖼</span>
-                    <span style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.12em;color:var(--ink4);margin-top:6px">Click or drag an image here</span>
-                    <span style="font-size:12px;color:var(--ink5)">PNG, JPG, WebP · max 5 MB</span>
-                  </div>
-                  <div class="img-upload-preview" id="dl-img-preview" style="display:none">
-                    <img id="dl-img-thumb" style="max-height:160px;max-width:100%;object-fit:contain;display:block;margin:auto">
-                    <button class="btn sm secondary" style="margin-top:10px" onclick="event.stopPropagation();clearImg('dl')"><span>✕ Remove image</span></button>
-                  </div>
-                  <div class="img-upload-progress" id="dl-img-progress" style="display:none">
-                    <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;color:var(--gold);margin-bottom:8px">Uploading to the forge…</div>
-                    <div class="prog-track"><div class="prog-fill" id="dl-img-bar" style="width:0%"></div></div>
-                  </div>
-                </div>
-              </div>
-              <div class="two-col">
-                <div class="field"><label>Devlog Type</label>
-                  <select id="dl-type">
-                    <option value="DEVLOG">📜 Devlog</option>
-                    <option value="MILESTONE">⚑ Milestone</option>
-                    <option value="DESIGN">🎨 Design</option>
-                  </select>
-                </div>
-                <div class="field"><label>Pin to top?</label>
-                  <select id="dl-pin">
-                    <option value="false">No</option>
-                    <option value="true">📌 Yes — Feature this entry</option>
-                  </select>
-                </div>
-              </div>
-              <button class="btn" onclick="postDevlog()"><span>Publish Devlog Scroll</span></button>
+        <div class="panel" style="margin-bottom:24px">
+          <div class="panel-header"><div class="panel-title">Post New Chronicle</div></div>
+          <div class="panel-body">
+            <div class="field"><label>Title</label>
+              <input type="text" id="upd-title" placeholder="e.g. Forge system prototype complete">
             </div>
-          </div>
-          <div class="panel">
-            <div class="panel-header"><div class="panel-title">Published Devlog Scrolls</div></div>
-            <div class="panel-body" style="padding:0">
-              <table class="data-table">
-                <thead><tr><th>Date</th><th>Title</th><th>Type</th><th>Pinned</th><th>Actions</th></tr></thead>
-                <tbody id="devlog-tbody"></tbody>
-              </table>
+            <div class="field"><label>Body</label>
+              <textarea id="upd-body" rows="4" placeholder="What was accomplished, what's next…"></textarea>
             </div>
+            <div class="two-col">
+              <div class="field"><label>Tag (optional)</label>
+                <input type="text" id="upd-tag" placeholder="MILESTONE · HOTFIX · DESIGN">
+              </div>
+              <div class="field"><label>Pin to top?</label>
+                <select id="upd-pin">
+                  <option value="false">No</option>
+                  <option value="true">📌 Yes — Pin this entry</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn" onclick="postUpdate()"><span>Publish Chronicle</span></button>
           </div>
         </div>
 
-        <!-- CHANGELOG TAB -->
-        <div id="scroll-changelog" style="display:none">
-          <div class="panel" style="margin-bottom:24px">
-            <div class="panel-header"><div class="panel-title">⚙ Post a Changelog Entry</div></div>
-            <div class="panel-body">
-              <div class="field"><label>Version / Title</label>
-                <input type="text" id="cl-title" placeholder="e.g. Launcher v1.1.0 — Auto-updater fix">
-              </div>
-              <div class="field"><label>Changes</label>
-                <textarea id="cl-body" rows="5" placeholder="• Fixed: auto-updater crash on cold boot&#10;• Added: build version display&#10;• Improved: login flow speed"></textarea>
-              </div>
-              <div class="two-col">
-                <div class="field"><label>Category</label>
-                  <select id="cl-type">
-                    <option value="PATCH">🔧 Patch</option>
-                    <option value="UPDATE">⬆ Update</option>
-                    <option value="HOTFIX">🔥 Hotfix</option>
-                    <option value="RELEASE">🚀 Release</option>
-                  </select>
-                </div>
-                <div class="field"><label>Pin to top?</label>
-                  <select id="cl-pin">
-                    <option value="false">No</option>
-                    <option value="true">📌 Yes</option>
-                  </select>
-                </div>
-              </div>
-              <button class="btn" onclick="postChangelog()"><span>Publish Changelog Entry</span></button>
-            </div>
-          </div>
-          <div class="panel">
-            <div class="panel-header"><div class="panel-title">Published Changelog</div></div>
-            <div class="panel-body" style="padding:0">
-              <table class="data-table">
-                <thead><tr><th>Date</th><th>Title</th><th>Type</th><th>Pinned</th><th>Actions</th></tr></thead>
-                <tbody id="changelog-tbody"></tbody>
-              </table>
-            </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Published Chronicles</div></div>
+          <div class="panel-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>Date</th><th>Title</th><th>Tag</th><th>Pinned</th><th>Actions</th></tr></thead>
+              <tbody id="updates-tbody"></tbody>
+            </table>
           </div>
         </div>
-
-        <!-- ALL ENTRIES TAB -->
-        <div id="scroll-all" style="display:none">
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title">All Published Entries</div>
-            </div>
-            <div class="panel-body" style="padding:0">
-              <table class="data-table">
-                <thead><tr><th>Date</th><th>Title</th><th>Tag</th><th>Pinned</th><th>Actions</th></tr></thead>
-                <tbody id="updates-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
       </div>
 
       <!-- ══ TEAM ══ -->
@@ -1746,7 +1623,7 @@ function showPage(id, btn) {
   if (btn) btn.classList.add('active');
   const titles = {
     overview:'Overview', codex:'Task Codex', sprint:'Sprint',
-    updates:'Scrolls & Changelog', team:'Guild Members', playtest:'Playtest'
+    updates:'Dev Chronicles', team:'Guild Members', playtest:'Playtest'
   };
   document.getElementById('page-title').textContent = titles[id] || id;
 }
@@ -1776,8 +1653,6 @@ async function loadAll() {
   renderCodex();
   renderSprintPage();
   renderUpdatesPage();
-  renderDevlogPage();
-  renderChangelogPage();
   renderTeamPage();
   renderPlaytestPage();
   renderMembersPage();
@@ -2176,181 +2051,51 @@ async function removeFromSprint(taskId) {
 /* ═══════════════════════════════════════════════════════════
    UPDATES PAGE
 ═══════════════════════════════════════════════════════════ */
-/* ── SCROLLS TAB SWITCHER ─────────────────────────────────── */
-function switchScrollTab(tab) {
-  ['devlog','changelog','all'].forEach(t => {
-    document.getElementById('scroll-' + t).style.display = t === tab ? '' : 'none';
-    const btn = document.getElementById('stab-' + t);
-    if (t === tab) {
-      btn.style.color = 'var(--gold)';
-      btn.style.borderBottom = '2px solid var(--gold2)';
-    } else {
-      btn.style.color = 'var(--ink4)';
-      btn.style.borderBottom = '2px solid transparent';
-    }
-  });
-  if (tab === 'all')       renderUpdatesPage();
-  if (tab === 'devlog')    renderDevlogPage();
-  if (tab === 'changelog') renderChangelogPage();
-}
-
-/* ── RENDER HELPERS ──────────────────────────────────────── */
-function makeUpdateRow(u) {
-  return `<tr>
-    <td style="color:var(--ink4);font-size:13px;white-space:nowrap">${new Date(u.created_at).toLocaleDateString()}</td>
-    <td>
-      ${u.image_url ? `<img src="${u.image_url}" alt="" style="height:32px;width:48px;object-fit:cover;border:1px solid var(--border);margin-right:8px;vertical-align:middle;display:inline-block">` : ''}
-      ${u.title}
-    </td>
-    <td>${u.tag ? `<span class="badge todo">${u.tag}</span>` : '—'}</td>
-    <td>${u.pinned ? '📌' : '—'}</td>
-    <td><button class="btn danger sm" onclick="deleteUpdate('${u.id}')"><span>Delete</span></button></td>
-  </tr>`;
-}
-
 async function renderUpdatesPage() {
   const { data } = await sb.from('public_updates').select('*')
     .order('pinned', { ascending:false })
     .order('created_at', { ascending:false });
+
   const tbody = document.getElementById('updates-tbody');
-  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No entries yet.</td></tr>'; return; }
-  tbody.innerHTML = data.map(makeUpdateRow).join('');
-}
-
-async function renderDevlogPage() {
-  const { data } = await sb.from('public_updates').select('*')
-    .in('tag', ['DEVLOG','MILESTONE','DESIGN'])
-    .order('pinned', { ascending:false })
-    .order('created_at', { ascending:false });
-  const tbody = document.getElementById('devlog-tbody');
-  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No devlog scrolls yet — post the first one above.</td></tr>'; return; }
-  tbody.innerHTML = data.map(makeUpdateRow).join('');
-}
-
-async function renderChangelogPage() {
-  const { data } = await sb.from('public_updates').select('*')
-    .in('tag', ['PATCH','UPDATE','HOTFIX','RELEASE'])
-    .order('pinned', { ascending:false })
-    .order('created_at', { ascending:false });
-  const tbody = document.getElementById('changelog-tbody');
-  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No changelog entries yet.</td></tr>'; return; }
-  tbody.innerHTML = data.map(makeUpdateRow).join('');
-}
-
-/* ── IMAGE UPLOAD HELPERS ────────────────────────────────── */
-let dlImgFile = null;
-let dlImgUrl  = null;
-
-function handleImgPick(event, prefix) {
-  const file = event.target.files[0];
-  if (!file) return;
-  setImgFile(prefix, file);
-}
-
-function handleImgDrop(event, prefix) {
-  event.preventDefault();
-  document.getElementById(`${prefix}-img-zone`).classList.remove('drag-over');
-  const file = event.dataTransfer.files[0];
-  if (!file || !file.type.startsWith('image/')) { toast('Please drop an image file.',true); return; }
-  setImgFile(prefix, file);
-}
-
-function setImgFile(prefix, file) {
-  if (file.size > 5 * 1024 * 1024) { toast('Image must be under 5 MB.',true); return; }
-  dlImgFile = file;
-  dlImgUrl  = null;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById(`${prefix}-img-thumb`).src = e.target.result;
-    document.getElementById(`${prefix}-img-placeholder`).style.display = 'none';
-    document.getElementById(`${prefix}-img-preview`).style.display     = 'flex';
-    document.getElementById(`${prefix}-img-progress`).style.display    = 'none';
-  };
-  reader.readAsDataURL(file);
-}
-
-function clearImg(prefix) {
-  dlImgFile = null;
-  dlImgUrl  = null;
-  document.getElementById(`${prefix}-img-input`).value     = '';
-  document.getElementById(`${prefix}-img-placeholder`).style.display = 'flex';
-  document.getElementById(`${prefix}-img-preview`).style.display     = 'none';
-  document.getElementById(`${prefix}-img-progress`).style.display    = 'none';
-}
-
-async function uploadImgToStorage(prefix, file) {
-  document.getElementById(`${prefix}-img-preview`).style.display  = 'none';
-  document.getElementById(`${prefix}-img-progress`).style.display = 'block';
-  document.getElementById(`${prefix}-img-bar`).style.width        = '30%';
-
-  const ext  = file.name.split('.').pop();
-  const path = `updates/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const { data, error } = await sb.storage.from('public-assets').upload(path, file, { upsert:false });
-
-  document.getElementById(`${prefix}-img-bar`).style.width = '100%';
-  document.getElementById(`${prefix}-img-progress`).style.display = 'none';
-
-  if (error) { toast('Image upload failed: '+error.message, true); return null; }
-  const { data: { publicUrl } } = sb.storage.from('public-assets').getPublicUrl(path);
-  return publicUrl;
-}
-
-/* ── POST DEVLOG ─────────────────────────────────────────── */
-async function postDevlog() {
-  const title  = document.getElementById('dl-title').value.trim();
-  const body   = document.getElementById('dl-body').value.trim();
-  const tag    = document.getElementById('dl-type').value;
-  const pinned = document.getElementById('dl-pin').value === 'true';
-  if (!title || !body) { toast('Title and body required.',true); return; }
-
-  let image_url = null;
-  if (dlImgFile) {
-    image_url = await uploadImgToStorage('dl', dlImgFile);
-    if (!image_url) return; // upload failed, error already shown
+  if (!data?.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No chronicles posted yet.</td></tr>';
+    return;
   }
-
-  const { error } = await sb.from('public_updates').insert({
-    title, body, tag, pinned, author_id: currentUser.id,
-    ...(image_url ? { image_url } : {})
-  });
-  if (error) { toast('Error: '+error.message,true); return; }
-  toast('Devlog scroll published!');
-  ['dl-title','dl-body'].forEach(id => document.getElementById(id).value='');
-  document.getElementById('dl-pin').value = 'false';
-  clearImg('dl');
-  await renderDevlogPage();
-  await renderOverview();
+  tbody.innerHTML = data.map(u => `
+    <tr>
+      <td style="color:var(--ink4);font-size:13px;white-space:nowrap">${new Date(u.created_at).toLocaleDateString()}</td>
+      <td>${u.title}</td>
+      <td>${u.tag ? `<span class="badge todo">${u.tag}</span>` : '—'}</td>
+      <td>${u.pinned ? '📌' : '—'}</td>
+      <td><button class="btn danger sm" onclick="deleteUpdate('${u.id}')"><span>Delete</span></button></td>
+    </tr>
+  `).join('');
 }
 
-/* ── POST CHANGELOG ──────────────────────────────────────── */
-async function postChangelog() {
-  const title  = document.getElementById('cl-title').value.trim();
-  const body   = document.getElementById('cl-body').value.trim();
-  const tag    = document.getElementById('cl-type').value;
-  const pinned = document.getElementById('cl-pin').value === 'true';
+async function postUpdate() {
+  const title  = document.getElementById('upd-title').value.trim();
+  const body   = document.getElementById('upd-body').value.trim();
+  const tag    = document.getElementById('upd-tag').value.trim();
+  const pinned = document.getElementById('upd-pin').value === 'true';
   if (!title || !body) { toast('Title and body required.',true); return; }
+
   const { error } = await sb.from('public_updates').insert({
-    title, body, tag, pinned, author_id: currentUser.id
+    title, body, tag: tag||null, pinned, author_id: currentUser.id
   });
   if (error) { toast('Error: '+error.message,true); return; }
-  toast('Changelog entry published!');
-  ['cl-title','cl-body'].forEach(id => document.getElementById(id).value='');
-  document.getElementById('cl-pin').value = 'false';
-  await renderChangelogPage();
+  toast('Chronicle published!');
+  ['upd-title','upd-body','upd-tag'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('upd-pin').value = 'false';
+  await renderUpdatesPage();
   await renderOverview();
 }
 
 async function deleteUpdate(id) {
-  if (!confirm('Remove this entry?')) return;
+  if (!confirm('Remove this chronicle?')) return;
   await sb.from('public_updates').delete().eq('id', id);
-  toast('Entry removed.');
+  toast('Chronicle removed.');
   await renderUpdatesPage();
-  await renderDevlogPage();
-  await renderChangelogPage();
 }
-
-/* legacy alias so renderOverview still works */
-async function postUpdate() { await postDevlog(); }
 
 /* ═══════════════════════════════════════════════════════════
    TEAM PAGE
@@ -2520,7 +2265,7 @@ function subscribeRealtime() {
     .on('postgres_changes',{ event:'*', schema:'public', table:'task_groups'     }, () => loadAll())
     .on('postgres_changes',{ event:'*', schema:'public', table:'tasks'           }, () => loadAll())
     .on('postgres_changes',{ event:'*', schema:'public', table:'subtasks'        }, () => loadAll())
-    .on('postgres_changes',{ event:'*', schema:'public', table:'public_updates'  }, () => { renderUpdatesPage(); renderDevlogPage(); renderChangelogPage(); })
+    .on('postgres_changes',{ event:'*', schema:'public', table:'public_updates'  }, () => renderUpdatesPage())
     .on('postgres_changes',{ event:'*', schema:'public', table:'profiles'        }, () => { renderTeamPage(); populateRoleSelect(); renderMembersPage();})
     .on('postgres_changes',{ event:'*', schema:'public', table:'playtest_status' }, () => renderPlaytestPage())
     .subscribe();
