@@ -1065,6 +1065,9 @@ hr.rune-divider::after {
       <button class="nav-item" onclick="showPage('members',this)">
         <span class="nav-icon">⚒</span><span>Members</span>
       </button>
+      <button class="nav-item" onclick="showPage('links',this)">
+        <span class="nav-icon">⬡</span><span>Community Links</span>
+      </button>
     </nav>
 
     <div class="sidebar-footer">
@@ -1440,6 +1443,62 @@ hr.rune-divider::after {
         </div>
       </div>
 
+      <!-- ══ COMMUNITY LINKS ══ -->
+      <div class="page" id="page-links">
+        <div class="panel" style="margin-bottom:24px">
+          <div class="panel-header"><div class="panel-title">⬡ Discord Banner</div></div>
+          <div class="panel-body">
+            <div class="two-col">
+              <div class="field"><label>Discord Invite URL</label>
+                <input type="text" id="lnk-discord" placeholder="https://discord.gg/…">
+              </div>
+              <div class="field"><label>Banner Subtitle</label>
+                <input type="text" id="lnk-discord-sub" placeholder="Chat with the dev, share ideas…">
+              </div>
+            </div>
+            <button class="btn" onclick="saveLinks()"><span>Save Discord Link</span></button>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:24px">
+          <div class="panel-header"><div class="panel-title">⬡ Social Links</div></div>
+          <div class="panel-body">
+            <div class="two-col">
+              <div class="field"><label>YouTube Channel URL</label>
+                <input type="text" id="lnk-youtube" placeholder="https://www.youtube.com/@…">
+              </div>
+              <div class="field"><label>GitHub URL</label>
+                <input type="text" id="lnk-github" placeholder="https://github.com/…">
+              </div>
+            </div>
+            <div class="two-col">
+              <div class="field"><label>Twitter / X URL</label>
+                <input type="text" id="lnk-twitter" placeholder="https://x.com/…">
+              </div>
+              <div class="field"><label>Reddit URL</label>
+                <input type="text" id="lnk-reddit" placeholder="https://reddit.com/r/…">
+              </div>
+            </div>
+            <button class="btn" onclick="saveLinks()"><span>Save Social Links</span></button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">⬡ Footer Links</div></div>
+          <div class="panel-body">
+            <div class="two-col">
+              <div class="field"><label>Support Page URL</label>
+                <input type="text" id="lnk-support" placeholder="supporter.html or https://…">
+              </div>
+              <div class="field"><label>Download Page URL</label>
+                <input type="text" id="lnk-download" placeholder="download.html or https://…">
+              </div>
+            </div>
+            <button class="btn" onclick="saveLinks()"><span>Save Footer Links</span></button>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main-area -->
 </div><!-- /dashboard -->
@@ -1599,6 +1658,75 @@ hr.rune-divider::after {
   </div>
 </div>
 
+<!-- ═══════════════ UPDATE EDIT MODAL ═══════════════ -->
+<div class="modal-overlay" id="update-modal-overlay" onclick="closeUpdateModal(event)">
+  <div class="modal-box" style="width:min(640px,96vw)" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="um-modal-title">Edit Entry</div>
+      <button class="modal-close" onclick="closeUpdateModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="um-id">
+      <input type="hidden" id="um-tag-type">
+      <div class="field"><label>Title</label>
+        <input type="text" id="um-title" placeholder="Entry title…">
+      </div>
+      <div class="field"><label>Body</label>
+        <textarea id="um-body" rows="7" placeholder="Entry body…"></textarea>
+      </div>
+      <div class="field">
+        <label>Cover Image</label>
+        <div class="img-upload-zone" id="um-img-zone" onclick="document.getElementById('um-img-input').click()"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="handleImgDrop(event,'um')">
+          <input type="file" id="um-img-input" accept="image/*" style="display:none" onchange="handleImgPick(event,'um')">
+          <div class="img-upload-placeholder" id="um-img-placeholder">
+            <span style="font-size:24px">🖼</span>
+            <span style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.12em;color:var(--ink4);margin-top:6px">Click or drag to replace image</span>
+          </div>
+          <div class="img-upload-preview" id="um-img-preview" style="display:none">
+            <img id="um-img-thumb" style="max-height:140px;max-width:100%;object-fit:contain;display:block;margin:auto">
+            <button class="btn sm secondary" style="margin-top:10px" onclick="event.stopPropagation();clearImg('um')"><span>✕ Remove image</span></button>
+          </div>
+          <div class="img-upload-progress" id="um-img-progress" style="display:none">
+            <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;color:var(--gold);margin-bottom:8px">Uploading…</div>
+            <div class="prog-track"><div class="prog-fill" id="um-img-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div id="um-current-img" style="margin-top:8px;display:none">
+          <span style="font-family:'Cinzel',serif;font-size:10px;color:var(--ink4);letter-spacing:.1em">CURRENT IMAGE</span>
+          <img id="um-current-img-thumb" style="max-height:80px;max-width:200px;object-fit:contain;display:block;margin:6px 0;border:1px solid var(--border)">
+          <button class="btn sm danger" onclick="clearCurrentImg()"><span>Remove current image</span></button>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label>Tag / Type</label>
+          <select id="um-tag">
+            <option value="DEVLOG">📜 Devlog</option>
+            <option value="MILESTONE">⚑ Milestone</option>
+            <option value="DESIGN">🎨 Design</option>
+            <option value="PATCH">🔧 Patch</option>
+            <option value="UPDATE">⬆ Update</option>
+            <option value="HOTFIX">🔥 Hotfix</option>
+            <option value="RELEASE">🚀 Release</option>
+          </select>
+        </div>
+        <div class="field"><label>Pin to top?</label>
+          <select id="um-pin">
+            <option value="false">No</option>
+            <option value="true">📌 Yes — Feature this entry</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn secondary sm" onclick="closeUpdateModal()"><span>Cancel</span></button>
+      <button class="btn sm" onclick="saveUpdateEdit()"><span>Save Changes</span></button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -1746,7 +1874,8 @@ function showPage(id, btn) {
   if (btn) btn.classList.add('active');
   const titles = {
     overview:'Overview', codex:'Task Codex', sprint:'Sprint',
-    updates:'Scrolls & Changelog', team:'Guild Members', playtest:'Playtest'
+    updates:'Scrolls & Changelog', team:'Guild Members', playtest:'Playtest',
+    members:'Members', links:'Community Links'
   };
   document.getElementById('page-title').textContent = titles[id] || id;
 }
@@ -1781,6 +1910,7 @@ async function loadAll() {
   renderTeamPage();
   renderPlaytestPage();
   renderMembersPage();
+  loadLinks();
   populateSprintSelects();
   populateRoleSelect();
 }
@@ -2204,7 +2334,12 @@ function makeUpdateRow(u) {
     </td>
     <td>${u.tag ? `<span class="badge todo">${u.tag}</span>` : '—'}</td>
     <td>${u.pinned ? '📌' : '—'}</td>
-    <td><button class="btn danger sm" onclick="deleteUpdate('${u.id}')"><span>Delete</span></button></td>
+    <td>
+      <div class="action-row">
+        <button class="btn secondary sm" onclick="openUpdateEditModal('${u.id}')"><span>✎ Edit</span></button>
+        <button class="btn danger sm" onclick="deleteUpdate('${u.id}')"><span>Delete</span></button>
+      </div>
+    </td>
   </tr>`;
 }
 
@@ -2240,43 +2375,6 @@ async function renderChangelogPage() {
 /* ── IMAGE UPLOAD HELPERS ────────────────────────────────── */
 let dlImgFile = null;
 let dlImgUrl  = null;
-
-function handleImgPick(event, prefix) {
-  const file = event.target.files[0];
-  if (!file) return;
-  setImgFile(prefix, file);
-}
-
-function handleImgDrop(event, prefix) {
-  event.preventDefault();
-  document.getElementById(`${prefix}-img-zone`).classList.remove('drag-over');
-  const file = event.dataTransfer.files[0];
-  if (!file || !file.type.startsWith('image/')) { toast('Please drop an image file.',true); return; }
-  setImgFile(prefix, file);
-}
-
-function setImgFile(prefix, file) {
-  if (file.size > 5 * 1024 * 1024) { toast('Image must be under 5 MB.',true); return; }
-  dlImgFile = file;
-  dlImgUrl  = null;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById(`${prefix}-img-thumb`).src = e.target.result;
-    document.getElementById(`${prefix}-img-placeholder`).style.display = 'none';
-    document.getElementById(`${prefix}-img-preview`).style.display     = 'flex';
-    document.getElementById(`${prefix}-img-progress`).style.display    = 'none';
-  };
-  reader.readAsDataURL(file);
-}
-
-function clearImg(prefix) {
-  dlImgFile = null;
-  dlImgUrl  = null;
-  document.getElementById(`${prefix}-img-input`).value     = '';
-  document.getElementById(`${prefix}-img-placeholder`).style.display = 'flex';
-  document.getElementById(`${prefix}-img-preview`).style.display     = 'none';
-  document.getElementById(`${prefix}-img-progress`).style.display    = 'none';
-}
 
 async function uploadImgToStorage(prefix, file) {
   document.getElementById(`${prefix}-img-preview`).style.display  = 'none';
@@ -2524,6 +2622,171 @@ function subscribeRealtime() {
     .on('postgres_changes',{ event:'*', schema:'public', table:'profiles'        }, () => { renderTeamPage(); populateRoleSelect(); renderMembersPage();})
     .on('postgres_changes',{ event:'*', schema:'public', table:'playtest_status' }, () => renderPlaytestPage())
     .subscribe();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UPDATE EDIT MODAL
+═══════════════════════════════════════════════════════════ */
+let umImgFile    = null;
+let umImgUrl     = null; // new upload URL
+let umRemoveImg  = false; // user explicitly cleared current image
+
+function openUpdateEditModal(id) {
+  sb.from('public_updates').select('*').eq('id', id).maybeSingle().then(({ data: u }) => {
+    if (!u) return;
+    document.getElementById('um-id').value          = u.id;
+    document.getElementById('um-title').value       = u.title || '';
+    document.getElementById('um-body').value        = u.body  || '';
+    document.getElementById('um-tag').value         = u.tag   || 'DEVLOG';
+    document.getElementById('um-pin').value         = u.pinned ? 'true' : 'false';
+    document.getElementById('um-modal-title').textContent = 'Edit: ' + u.title;
+
+    // Reset image state
+    umImgFile   = null;
+    umImgUrl    = null;
+    umRemoveImg = false;
+    document.getElementById('um-img-placeholder').style.display = 'flex';
+    document.getElementById('um-img-preview').style.display     = 'none';
+    document.getElementById('um-img-progress').style.display    = 'none';
+    document.getElementById('um-img-input').value               = '';
+
+    // Show existing image if any
+    const curBlock = document.getElementById('um-current-img');
+    if (u.image_url) {
+      curBlock.style.display = '';
+      document.getElementById('um-current-img-thumb').src = u.image_url;
+    } else {
+      curBlock.style.display = 'none';
+    }
+
+    document.getElementById('update-modal-overlay').classList.add('open');
+  });
+}
+
+function clearCurrentImg() {
+  umRemoveImg = true;
+  document.getElementById('um-current-img').style.display = 'none';
+}
+
+async function saveUpdateEdit() {
+  const id    = document.getElementById('um-id').value;
+  const title = document.getElementById('um-title').value.trim();
+  const body  = document.getElementById('um-body').value.trim();
+  if (!title || !body) { toast('Title and body are required.', true); return; }
+
+  const payload = {
+    title,
+    body,
+    tag:        document.getElementById('um-tag').value,
+    pinned:     document.getElementById('um-pin').value === 'true',
+    updated_at: new Date().toISOString()
+  };
+
+  // Handle image
+  if (umImgFile) {
+    const url = await uploadImgToStorage('um', umImgFile);
+    if (!url) return;
+    payload.image_url = url;
+  } else if (umRemoveImg) {
+    payload.image_url = null;
+  }
+
+  const { error } = await sb.from('public_updates').update(payload).eq('id', id);
+  if (error) { toast('Error: ' + error.message, true); return; }
+  toast('Entry updated.');
+  closeUpdateModal();
+  await renderUpdatesPage();
+  await renderDevlogPage();
+  await renderChangelogPage();
+  await renderOverview();
+}
+
+// Intercept the generic handleImgPick/Drop for the um prefix
+const _origSetImgFile = window.setImgFile;
+function handleImgPick(event, prefix) {
+  const file = event.target.files[0];
+  if (!file) return;
+  setImgFileForPrefix(prefix, file);
+}
+
+function handleImgDrop(event, prefix) {
+  event.preventDefault();
+  document.getElementById(`${prefix}-img-zone`).classList.remove('drag-over');
+  const file = event.dataTransfer.files[0];
+  if (!file || !file.type.startsWith('image/')) { toast('Please drop an image file.', true); return; }
+  setImgFileForPrefix(prefix, file);
+}
+
+function setImgFileForPrefix(prefix, file) {
+  if (file.size > 5 * 1024 * 1024) { toast('Image must be under 5 MB.', true); return; }
+  if (prefix === 'um') {
+    umImgFile = file;
+    umImgUrl  = null;
+    document.getElementById('um-current-img').style.display = 'none';
+  } else {
+    dlImgFile = file;
+    dlImgUrl  = null;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById(`${prefix}-img-thumb`).src = e.target.result;
+    document.getElementById(`${prefix}-img-placeholder`).style.display = 'none';
+    document.getElementById(`${prefix}-img-preview`).style.display     = 'flex';
+    document.getElementById(`${prefix}-img-progress`).style.display    = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImg(prefix) {
+  if (prefix === 'um') { umImgFile = null; umImgUrl = null; }
+  else { dlImgFile = null; dlImgUrl = null; }
+  document.getElementById(`${prefix}-img-input`).value                 = '';
+  document.getElementById(`${prefix}-img-placeholder`).style.display   = 'flex';
+  document.getElementById(`${prefix}-img-preview`).style.display       = 'none';
+  document.getElementById(`${prefix}-img-progress`).style.display      = 'none';
+}
+
+function closeUpdateModal(e) {
+  if (e && e.target !== document.getElementById('update-modal-overlay')) return;
+  document.getElementById('update-modal-overlay').classList.remove('open');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COMMUNITY LINKS (site_config table)
+   Row: { key: 'community_links', value: { discord, discord_sub, youtube, github, twitter, reddit, support, download } }
+═══════════════════════════════════════════════════════════ */
+async function loadLinks() {
+  const { data } = await sb.from('site_config').select('value').eq('key', 'community_links').maybeSingle();
+  if (!data?.value) return;
+  const v = data.value;
+  document.getElementById('lnk-discord').value     = v.discord      || '';
+  document.getElementById('lnk-discord-sub').value = v.discord_sub  || '';
+  document.getElementById('lnk-youtube').value     = v.youtube      || '';
+  document.getElementById('lnk-github').value      = v.github       || '';
+  document.getElementById('lnk-twitter').value     = v.twitter      || '';
+  document.getElementById('lnk-reddit').value      = v.reddit       || '';
+  document.getElementById('lnk-support').value     = v.support      || '';
+  document.getElementById('lnk-download').value    = v.download     || '';
+}
+
+async function saveLinks() {
+  const value = {
+    discord:      document.getElementById('lnk-discord').value.trim(),
+    discord_sub:  document.getElementById('lnk-discord-sub').value.trim(),
+    youtube:      document.getElementById('lnk-youtube').value.trim(),
+    github:       document.getElementById('lnk-github').value.trim(),
+    twitter:      document.getElementById('lnk-twitter').value.trim(),
+    reddit:       document.getElementById('lnk-reddit').value.trim(),
+    support:      document.getElementById('lnk-support').value.trim(),
+    download:     document.getElementById('lnk-download').value.trim(),
+  };
+  const { data: existing } = await sb.from('site_config').select('id').eq('key', 'community_links').maybeSingle();
+  const op = existing
+    ? sb.from('site_config').update({ value, updated_at: new Date().toISOString() }).eq('key', 'community_links')
+    : sb.from('site_config').insert({ key: 'community_links', value });
+  const { error } = await op;
+  if (error) { toast('Error: ' + error.message, true); return; }
+  toast('Community links saved!');
 }
 
 /* ═══════════════════════════════════════════════════════════
