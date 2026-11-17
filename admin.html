@@ -1289,8 +1289,16 @@ async function removeFromSprint(taskId) {
 /* ── SCROLLS TAB SWITCHER ─────────────────────────────────── */
 function switchScrollTab(tab) {
   ['devlog','changelog','all'].forEach(t => {
-    document.getElementById('scroll-' + t).style.display = t === tab ? '' : 'none';
+    const panel = document.getElementById('scroll-' + t);
+
+    // Remove the hidden class from the active tab
+    panel.classList.toggle('iv-inline-001', t !== tab);
+
+    // Explicitly control visibility
+    panel.style.display = t === tab ? 'block' : 'none';
+
     const btn = document.getElementById('stab-' + t);
+
     if (t === tab) {
       btn.style.color = 'var(--gold)';
       btn.style.borderBottom = '2px solid var(--gold2)';
@@ -1299,8 +1307,9 @@ function switchScrollTab(tab) {
       btn.style.borderBottom = '2px solid transparent';
     }
   });
-  if (tab === 'all')       renderUpdatesPage();
-  if (tab === 'devlog')    renderDevlogPage();
+
+  if (tab === 'all') renderUpdatesPage();
+  if (tab === 'devlog') renderDevlogPage();
   if (tab === 'changelog') renderChangelogPage();
 }
 

@@ -7,6 +7,20 @@
 <title>The Forge — Ironveil Community</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="styles.css" rel="stylesheet"/>
+<style>
+/* Latest YouTube uploads */
+.yt-video-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;margin-top:22px}
+.yt-video-card{display:block;min-width:0;overflow:hidden;text-decoration:none;color:inherit;background:var(--panel,rgba(255,255,255,.025));border:1px solid var(--line,rgba(255,255,255,.1));border-radius:10px;transition:transform .2s,border-color .2s}
+.yt-video-card:hover{transform:translateY(-3px);border-color:var(--gold3,rgba(205,160,80,.6))}
+.yt-video-thumb{position:relative;aspect-ratio:16/9;background:#151515;overflow:hidden}
+.yt-video-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.yt-video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:46px;height:32px;border-radius:9px;background:rgba(190,30,30,.94);display:grid;place-items:center;color:#fff;font-size:18px;padding-left:2px}
+.yt-video-info{padding:13px 14px 15px}
+.yt-video-title{font-family:inherit;font-size:14px;line-height:1.45;font-weight:700;margin:0 0 8px;color:var(--ink, #f5ead4);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.yt-video-date{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink4,#999);margin:0}
+.yt-feed-status{padding:24px 0;color:var(--ink4,#999);font-size:13px}
+@media(max-width:560px){.yt-video-grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body class="page-community">
 <!-- ── HEADER ─────────────────────────────────────────────── -->
@@ -184,17 +198,13 @@
         Subscribe →
       </a>
 </div>
-<div class="yt-placeholder">
-<div class="yt-play">
-<svg viewbox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
+<div id="yt-videos" aria-live="polite">
+  <div class="yt-feed-status">Loading latest uploads…</div>
 </div>
-<p>DEVLOG #1 COMING SOON</p>
-<span>Subscribe to get notified the moment it drops</span>
-<a class="yt-sub" href="https://www.youtube.com/@FullStack-Icarus" id="yt-sub-link" target="_blank">
-<svg fill="white" height="13" viewbox="0 0 24 24" width="13"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"></path></svg>
-        Subscribe on YouTube
-      </a>
-</div>
+<a class="yt-sub" href="https://www.youtube.com/@FullStack-Icarus" id="yt-sub-link" target="_blank" rel="noopener noreferrer">
+  <svg fill="white" height="13" viewbox="0 0 24 24" width="13"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"></path></svg>
+  Subscribe on YouTube
+</a>
 </div>
 <div class="iv-inline-012">— ⚒ —</div>
 </div><!-- /page-body -->
@@ -554,11 +564,89 @@ async function loadFellowship() {
   });
 }
 
+/* ── YOUTUBE LATEST UPLOADS ─────────────────────────────────
+   Add youtube_channel_id to site_config.community_links.
+   Example: {"youtube":"https://www.youtube.com/@FullStack-Icarus",
+             "youtube_channel_id":"UCxxxxxxxxxxxxxxxxxxxxxx"}
+   The feed is read through RSS2JSON so the browser does not need a YouTube API key.
+*/
+async function loadYouTubeVideos(channelId) {
+  const host = document.getElementById('yt-videos');
+  if (!host) return;
+  if (!channelId) {
+    host.innerHTML = '<div class="yt-feed-status">The video feed is ready to connect. Add the channel ID to <code>site_config → community_links → youtube_channel_id</code> to display the latest uploads automatically.</div>';
+    return;
+  }
+
+  host.innerHTML = '<div class="yt-feed-status">Loading latest uploads…</div>';
+  const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`;
+  const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
+
+  try {
+    const response = await fetch(apiUrl, { headers: { 'Accept': 'application/json' } });
+    if (!response.ok) throw new Error(`Feed request failed (${response.status})`);
+    const result = await response.json();
+    if (result.status !== 'ok' || !Array.isArray(result.items)) {
+      throw new Error(result.message || 'The YouTube feed could not be read.');
+    }
+
+    const videos = result.items.slice(0, 6);
+    if (!videos.length) {
+      host.innerHTML = '<div class="yt-feed-status">No public videos have been posted yet. New uploads will appear here automatically.</div>';
+      return;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'yt-video-grid';
+    videos.forEach(video => {
+      const link = document.createElement('a');
+      link.className = 'yt-video-card';
+      link.href = video.link || `https://www.youtube.com/watch?v=${video.guid || ''}`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+
+      const thumb = document.createElement('div');
+      thumb.className = 'yt-video-thumb';
+      const image = document.createElement('img');
+      const videoId = (video.guid || '').replace(/^yt:video:/, '');
+      image.src = video.thumbnail || (videoId ? `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg` : '');
+      image.alt = '';
+      image.loading = 'lazy';
+      image.onerror = () => { image.style.display = 'none'; };
+      thumb.appendChild(image);
+      const play = document.createElement('span');
+      play.className = 'yt-video-play';
+      play.setAttribute('aria-hidden', 'true');
+      play.textContent = '▶';
+      thumb.appendChild(play);
+
+      const info = document.createElement('div');
+      info.className = 'yt-video-info';
+      const title = document.createElement('p');
+      title.className = 'yt-video-title';
+      title.textContent = video.title || 'Untitled video';
+      const date = document.createElement('p');
+      date.className = 'yt-video-date';
+      const published = video.pubDate ? new Date(video.pubDate) : null;
+      date.textContent = published && !Number.isNaN(published.getTime())
+        ? published.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' })
+        : 'YouTube upload';
+      info.append(title, date);
+      link.append(thumb, info);
+      grid.appendChild(link);
+    });
+    host.replaceChildren(grid);
+  } catch (error) {
+    console.warn('Unable to load YouTube uploads:', error);
+    host.innerHTML = '<div class="yt-feed-status">We couldn’t load the video feed right now. You can still <a href="https://www.youtube.com/@FullStack-Icarus" target="_blank" rel="noopener noreferrer">watch the channel on YouTube</a>.</div>';
+  }
+}
+
 /* ── COMMUNITY LINKS (from site_config) ──────────────────── */
 async function loadLinks() {
   const { data } = await sb.from('site_config').select('value').eq('key', 'community_links').maybeSingle();
-  if (!data?.value) return;
-  const v = data.value;
+  const v = data?.value || {};
+  loadYouTubeVideos(v.youtube_channel_id || '');
 
   // Helper: set href and show/hide element if URL is empty
   function setLink(id, url, fallback) {
