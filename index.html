@@ -1,778 +1,205 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>Project Ironveil — Open Development VR RPG</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
-<style>
-/* ── TOKENS ──────────────────────────────────────────────── */
-:root {
-  /* Palette pulled from the hero artwork */
-  --sky:       #d6eaf8;   /* soft blue sky */
-  --sky2:      #b8d9ee;   /* mid sky */
-  --sky3:      #8fc3e0;   /* deeper sky */
-  --mist:      #e8f4f0;   /* hazy meadow light */
-  --cloud:     #f4f9fd;   /* brightest cloud */
-  --forest:    #2d5a3d;   /* deep forest green */
-  --forest2:   #3d7a52;   /* mid forest */
-  --forest3:   #54a06d;   /* bright leaf */
-  --river:     #2e6b9e;   /* river blue */
-  --river2:    #3d8bbf;   /* water shimmer */
-  --river3:    #5aa8d6;   /* light water */
-  --teal:      #1e7060;   /* banner teal */
-  --teal2:     #2a9478;
-  --teal3:     #3ab898;
-  --gold:      #8b6910;
-  --gold2:     #b8900f;
-  --gold3:     #d4a820;
-  --gold4:     #f0c83a;
-  --stone:     #c8c0b0;   /* stone walls */
-  --ink:       #1a2a1e;   /* deep forest ink */
-  --ink2:      #2c3e30;
-  --ink3:      #3d5442;
-  --ink4:      #5a7260;
-  --parch:     #f5ead4;
-  --blood:     #7a1c1c;
-
-  --border-light: rgba(46,107,158,.15);
-  --border-forest: rgba(45,90,61,.15);
-  --shadow: rgba(30,60,40,.12);
-  --shadow2: rgba(30,60,40,.28);
-}
-
-* { margin:0; padding:0; box-sizing:border-box; }
-html { scroll-behavior:smooth; }
-
-body {
-  background: var(--cloud);
-  color: var(--ink);
-  font-family: 'Crimson Pro', serif;
-  font-size: 18px;
-  line-height: 1.7;
-  overflow-x: hidden;
-}
-
-/* ── HEADER ──────────────────────────────────────────────── */
-header {
-  position:fixed; top:0; left:0; right:0; z-index:400;
-  height:64px; padding:0 48px;
-  display:flex; align-items:center; justify-content:space-between;
-  transition: background .4s, border-color .4s, box-shadow .4s;
-}
-
-header.scrolled {
-  background: rgba(244,249,253,.96);
-  border-bottom: 1px solid rgba(46,107,158,.18);
-  box-shadow: 0 2px 28px rgba(30,60,40,.1);
-  backdrop-filter: blur(12px);
-}
-
-.logo {
-  font-family:'Cinzel',serif; font-weight:700;
-  font-size:14px; letter-spacing:.22em;
-  color:rgba(255,255,255,.92); text-decoration:none;
-  display:flex; align-items:center; gap:11px;
-  transition: color .4s;
-}
-header.scrolled .logo { color: var(--forest); }
-
-.logo-mark {
-  width:34px; height:34px;
-  border:1px solid rgba(255,255,255,.3);
-  background:rgba(255,255,255,.12);
-  display:flex; align-items:center; justify-content:center;
-  font-size:15px;
-}
-header.scrolled .logo-mark {
-  border-color: rgba(45,90,61,.3);
-  background: rgba(45,90,61,.08);
-}
-
-nav { display:flex; gap:36px; align-items:center; }
-nav a {
-  font-family:'Cinzel',serif; font-size:10.5px; letter-spacing:.18em;
-  color:rgba(255,255,255,.65); text-decoration:none; transition:color .25s;
-}
-nav a:hover { color: var(--gold4); }
-header.scrolled nav a { color: var(--ink3); }
-header.scrolled nav a:hover { color: var(--forest); }
-
-.header-right { display:flex; gap:8px; align-items:center; }
-
-/* ── BUTTONS ─────────────────────────────────────────────── */
-.btn {
-  font-family:'Cinzel',serif; font-size:10.5px; letter-spacing:.14em;
-  cursor:pointer; transition:all .2s; padding:8px 20px;
-  text-decoration:none; display:inline-flex; align-items:center; gap:6px;
-  border:1px solid;
-}
-.btn.ghost {
-  background: rgba(255,255,255,.12);
-  color: rgba(255,255,255,.85);
-  border-color: rgba(255,255,255,.3);
-}
-.btn.ghost:hover {
-  background: rgba(255,255,255,.22);
-  border-color: rgba(255,255,255,.6);
-}
-header.scrolled .btn.ghost {
-  background: transparent;
-  color: var(--forest);
-  border-color: rgba(45,90,61,.3);
-}
-header.scrolled .btn.ghost:hover {
-  background: rgba(45,90,61,.07);
-  border-color: var(--forest2);
-}
-.btn.forest {
-  background: var(--forest);
-  color: #fff;
-  border-color: var(--forest);
-  font-weight:700;
-}
-.btn.forest:hover { background: var(--forest2); border-color: var(--forest2); }
-.btn.river {
-  background: rgba(46,107,158,.12);
-  color: var(--river);
-  border-color: rgba(46,107,158,.35);
-}
-.btn.river:hover { background: rgba(46,107,158,.2); border-color: var(--river); }
-.btn.gold {
-  background: rgba(139,105,20,.12);
-  color: var(--gold2);
-  border-color: rgba(184,144,15,.4);
-}
-.btn.gold:hover { background: rgba(139,105,20,.22); border-color: var(--gold3); }
-
-.user-chip {
-  display:flex; align-items:center; gap:8px;
-  font-family:'Cinzel',serif; font-size:10px;
-  color: var(--forest); letter-spacing:.08em;
-  padding:6px 14px;
-  border:1px solid rgba(45,90,61,.25);
-  background: rgba(45,90,61,.08);
-  text-decoration:none;
-  transition: all .25s;
-}
-.user-chip:hover { color: var(--forest2); border-color: rgba(45,90,61,.45); }
-
-/* ══ CINEMATIC HERO ══════════════════════════════════════════ */
-.hero-shell {
-  position:relative; width:100%; height:100svh; min-height:640px;
-  overflow:hidden; display:flex; flex-direction:column;
-  align-items:center; justify-content:flex-end;
-  padding-bottom: 100px;
-}
-
-.hero-bg {
-  position:absolute; inset:0;
-  background: url('ironveilmiddlenotitle.png') center 30% / cover no-repeat;
-  transform-origin: center center;
-  will-change: transform;
-}
-
-/* Bright, airy vignette — not dark */
-.hero-vignette {
-  position:absolute; inset:0;
-  background:
-    linear-gradient(to bottom,
-      rgba(30,50,80,.35) 0%,
-      rgba(30,50,80,.0) 22%,
-      rgba(30,50,80,.0) 52%,
-      rgba(20,45,30,.35) 74%,
-      rgba(15,35,20,.82) 100%
-    );
-  z-index:1;
-}
-
-.hero-content {
-  position:relative; z-index:2;
-  display:flex; flex-direction:column;
-  align-items:center;
-  text-align:center;
-  gap:0;
-}
-
-.hero-logo-img {
-  width: clamp(300px, 56vw, 800px);
-  filter: drop-shadow(0 4px 40px rgba(0,0,0,.5)) drop-shadow(0 0 80px rgba(46,107,158,.3));
-  animation: heroFade 1.4s ease both;
-  margin-bottom: 8px;
-}
-
-.hero-eyebrow {
-  font-family:'Cinzel',serif; font-size:9.5px;
-  letter-spacing:.5em; color:rgba(214,234,248,.7);
-  margin-bottom: 28px;
-  animation: heroFade 1.4s .1s ease both;
-}
-
-.hero-tagline {
-  font-family:'IM Fell English',serif; font-style:italic;
-  font-size:clamp(17px,2.2vw,23px);
-  color:rgba(232,244,240,.85);
-  letter-spacing:.05em;
-  text-shadow: 0 2px 20px rgba(0,0,0,.5);
-  margin-bottom: 38px;
-  animation: heroFade 1.4s .2s ease both;
-}
-
-.hero-cta {
-  display:flex; gap:12px; align-items:center;
-  animation: heroFade 1.4s .32s ease both;
-}
-
-/* playtest badge */
-.pt-badge {
-  display:inline-flex; align-items:center; gap:10px;
-  padding:9px 22px;
-  border:1px solid rgba(90,168,214,.3);
-  background:rgba(15,40,60,.45); backdrop-filter:blur(6px);
-  font-family:'Cinzel',serif; font-size:10px;
-  letter-spacing:.12em; color:rgba(214,234,248,.7);
-  animation: heroFade 1.4s .44s ease both;
-  margin-top: 22px;
-}
-.pt-pip {
-  width:6px; height:6px; border-radius:50%;
-  background:rgba(214,234,248,.3);
-  animation:pipPulse 2.5s ease-in-out infinite;
-}
-.pt-pip.open { background:var(--teal3); box-shadow:0 0 6px var(--teal3); }
-.pt-pip.soon { background:var(--gold3); box-shadow:0 0 6px var(--gold3); }
-
-@keyframes pipPulse {
-  0%,100% { opacity:1; transform:scale(1); }
-  50%      { opacity:.35; transform:scale(.7); }
-}
-
-.hero-scroll-cue {
-  position:absolute; bottom:32px; left:50%; transform:translateX(-50%);
-  z-index:2; font-family:'Cinzel',serif; font-size:8.5px;
-  letter-spacing:.32em; color:rgba(214,234,248,.4);
-  display:flex; flex-direction:column; align-items:center; gap:8px;
-  animation: heroFade 2s 1s ease both;
-}
-.scroll-arrow {
-  width:1px; height:36px;
-  background:linear-gradient(to bottom, rgba(214,234,248,.4), transparent);
-  animation: scrollPulse 2s ease-in-out infinite;
-}
-@keyframes scrollPulse {
-  0%,100% { opacity:.3; transform:scaleY(1); }
-  50%      { opacity:.9; transform:scaleY(1.4); }
-}
-
-@keyframes heroFade {
-  from { opacity:0; transform:translateY(18px); }
-  to   { opacity:1; transform:none; }
-}
-
-/* ══ INTRO BAND ══════════════════════════════════════════════ */
-/* The transition from dark hero into light content */
-.intro-band {
-  background: linear-gradient(to bottom, rgba(15,35,20,.82), var(--mist));
-  padding: 80px 60px 64px;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
-.intro-band-inner { max-width: 680px; margin: 0 auto; }
-.intro-kicker {
-  font-family:'Cinzel',serif; font-size:9.5px; letter-spacing:.48em;
-  color: var(--teal2); margin-bottom: 18px; display:block;
-}
-.intro-heading {
-  font-family:'Cinzel Decorative',serif;
-  font-size: clamp(22px, 3.8vw, 40px);
-  color: var(--cloud);
-  letter-spacing: .03em; line-height: 1.15;
-  margin-bottom: 20px;
-}
-.intro-heading em { font-style:normal; color: var(--sky3); }
-.intro-body {
-  font-family:'IM Fell English',serif; font-style:italic;
-  font-size: clamp(16px, 1.9vw, 20px);
-  color: rgba(232,244,240,.75);
-  line-height: 1.75; margin-bottom: 16px;
-}
-.intro-body-plain {
-  font-family:'Crimson Pro',serif;
-  font-size: clamp(15px, 1.5vw, 17px);
-  color: rgba(214,234,248,.6);
-  line-height: 1.75; margin-bottom: 32px;
-}
-
-/* ══ LIGHT CONTENT AREA ══════════════════════════════════════ */
-.light-shell {
-  background: var(--cloud);
-  position: relative;
-  z-index: 1;
-}
-
-/* Subtle texture on light sections */
-.light-shell::before {
-  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
-  opacity:.4; mix-blend-mode:multiply;
-}
-
-/* ══ WHAT SETS IT APART (light) ══════════════════════════════ */
-.pillars-shell {
-  background: var(--mist);
-  border-top: 1px solid rgba(46,107,158,.1);
-  border-bottom: 1px solid rgba(46,107,158,.1);
-  padding: 72px 60px;
-  position:relative; z-index:1;
-}
-
-.pillars-inner { max-width: 1100px; margin: 0 auto; }
-
-.section-eyebrow {
-  font-family:'Cinzel',serif; font-size:9px; letter-spacing:.46em;
-  color: var(--teal); margin-bottom: 14px; display:block;
-  text-align:center;
-}
-.section-heading-light {
-  font-family:'Cinzel Decorative',serif;
-  font-size: clamp(20px, 3vw, 32px);
-  color: var(--ink); letter-spacing:.03em;
-  text-align:center; margin-bottom: 52px;
-  line-height:1.2;
-}
-.section-heading-light em { font-style:normal; color: var(--river); }
-
-.world-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px 60px;
-}
-
-.world-item {}
-.world-item-roman {
-  font-family:'Cinzel Decorative',serif;
-  font-size:28px; color: rgba(46,107,158,.18);
-  line-height:1; margin-bottom: 6px;
-}
-.world-item-title {
-  font-family:'Cinzel',serif; font-size:14px; font-weight:700;
-  letter-spacing:.1em; color: var(--forest);
-  margin-bottom: 8px;
-}
-.world-item-body {
-  font-size:15.5px; color: var(--ink3); line-height:1.7;
-}
-
-/* ══ FEATURE CARDS (sky blue) ════════════════════════════════ */
-.features-shell {
-  background: var(--cloud);
-  padding: 72px 60px;
-  position:relative; z-index:1;
-}
-.features-inner { max-width: 1100px; margin: 0 auto; }
-
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
-  gap: 12px;
-  margin-top: 48px;
-}
-
-.feature-card {
-  background: #fff;
-  border: 1px solid rgba(46,107,158,.12);
-  padding: 28px 24px;
-  position: relative; overflow: hidden;
-  transition: border-color .25s, box-shadow .25s, transform .2s;
-  box-shadow: 0 2px 12px rgba(30,60,40,.05);
-}
-.feature-card:hover {
-  border-color: rgba(46,107,158,.3);
-  box-shadow: 0 6px 28px rgba(30,60,40,.1);
-  transform: translateY(-2px);
-}
-.feature-card::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:2px;
-  background: linear-gradient(90deg, var(--river3), var(--forest3));
-  opacity:0; transition:opacity .25s;
-}
-.feature-card:hover::before { opacity:1; }
-
-.feature-icon { font-size:26px; margin-bottom:14px; display:block; line-height:1; }
-.feature-title {
-  font-family:'Cinzel',serif; font-size:13px; font-weight:700;
-  letter-spacing:.08em; color: var(--ink); margin-bottom:8px;
-}
-.feature-desc { font-size:14.5px; color: var(--ink4); line-height:1.65; }
-
-/* ══ FOLLOW THE DEV CTA (forest green) ═══════════════════════ */
-.cta-shell {
-  background: linear-gradient(135deg, var(--forest) 0%, var(--river) 100%);
-  padding: 80px 60px;
-  text-align:center; position:relative; overflow:hidden;
-  z-index:1;
-}
-.cta-shell::before {
-  content:'';
-  position:absolute; inset:0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
-  opacity:.5; mix-blend-mode:overlay;
-}
-.cta-inner { max-width:600px; margin:0 auto; position:relative; z-index:1; }
-.cta-kicker {
-  font-family:'Cinzel',serif; font-size:9px; letter-spacing:.46em;
-  color:rgba(214,234,248,.6); margin-bottom:14px; display:block;
-}
-.cta-heading {
-  font-family:'Cinzel Decorative',serif;
-  font-size:clamp(22px,3.5vw,36px);
-  color:#fff; letter-spacing:.03em; line-height:1.15;
-  margin-bottom:14px;
-}
-.cta-body {
-  font-family:'IM Fell English',serif; font-style:italic;
-  font-size:17px; color:rgba(232,244,240,.75);
-  margin-bottom:36px; line-height:1.7;
-}
-.btn.cta-white {
-  background: rgba(255,255,255,.15);
-  color: #fff; border-color: rgba(255,255,255,.4);
-  font-size:12px; padding:13px 36px; letter-spacing:.2em;
-}
-.btn.cta-white:hover {
-  background: rgba(255,255,255,.28);
-  border-color: rgba(255,255,255,.75);
-}
-.btn.cta-pale {
-  background: transparent;
-  color: rgba(214,234,248,.8); border-color: rgba(214,234,248,.3);
-  font-size:11px; padding:11px 26px;
-}
-.btn.cta-pale:hover {
-  background: rgba(214,234,248,.1);
-  border-color: rgba(214,234,248,.6);
-}
-
-/* ══ SUPPORT ══════════════════════════════════════════════════ */
-.support-shell {
-  border-top: 1px solid rgba(46,107,158,.1);
-  background: var(--mist);
-  padding: 64px 60px;
-}
-.support-inner { max-width:960px; margin:0 auto; }
-.support-header {
-  display:flex; align-items:center; gap:14px; margin-bottom:28px;
-}
-.support-title {
-  font-family:'Cinzel',serif; font-size:18px; font-weight:700;
-  color:var(--ink); letter-spacing:.1em; white-space:nowrap;
-}
-.support-rule { flex:1; height:1px; background:linear-gradient(90deg, rgba(46,107,158,.25), transparent); }
-.support-box { display:flex; flex-direction:row; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap; }
-
-.gofundme-support-button {
-  display:inline-flex; align-items:center; justify-content:space-between; gap:18px;
-  background:#035a31; color:white; text-decoration:none;
-  font-family:Inter,sans-serif; font-weight:600; font-size:15px;
-  padding:8px 18px; border-radius:6px; min-width:260px;
-  box-shadow:0 4px 14px rgba(3,90,49,.25);
-  transition:transform .18s ease,box-shadow .18s ease;
-}
-.gofundme-support-button:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(3,90,49,.35); }
-.gofundme-badge img { height:16px; width:auto; display:block; }
-
-.stripe-support-button {
-  display:inline-flex; align-items:center; justify-content:space-between; gap:18px;
-  background:#635bff; color:white; text-decoration:none;
-  font-family:Inter,sans-serif; font-weight:600; font-size:15px;
-  padding:8px 18px; border-radius:6px; min-width:260px;
-  box-shadow:0 4px 14px rgba(99,91,255,.25);
-  transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
-}
-.stripe-support-button:hover { background:#5851e6; transform:translateY(-1px); box-shadow:0 6px 20px rgba(99,91,255,.35); }
-.stripe-badge img { height:16px; width:auto; display:block; }
-
-/* ── SKELETON ─────────────────────────────────────────────── */
-.skel {
-  background:linear-gradient(90deg,rgba(0,0,0,.04) 25%,rgba(0,0,0,.08) 50%,rgba(0,0,0,.04) 75%);
-  background-size:200% 100%; animation:shim 1.4s infinite;
-}
-@keyframes shim { from{background-position:200% 0} to{background-position:-200% 0} }
-
-/* ── AUTH MODAL ──────────────────────────────────────────── */
-.auth-overlay { position:fixed; inset:0; z-index:600; background:rgba(20,50,30,.7); display:none; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(8px); }
-.auth-overlay.open { display:flex; }
-.auth-box { background:var(--cloud); border:1px solid rgba(46,107,158,.25); width:100%; max-width:420px; box-shadow:0 32px 80px rgba(20,50,30,.25); animation:fadeUp .28s cubic-bezier(.34,1.56,.64,1); }
-@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
-.auth-head { background:linear-gradient(135deg, var(--forest), var(--river)); padding:26px 28px 20px; text-align:center; }
-.auth-title { font-family:'Cinzel Decorative',serif; font-size:18px; color:#fff; letter-spacing:.06em; margin-bottom:4px; }
-.auth-sub   { font-style:italic; font-size:13.5px; color:rgba(214,234,248,.7); }
-.auth-body  { padding:24px 28px; }
-.auth-tabs  { display:flex; gap:0; margin-bottom:22px; border:1px solid rgba(46,107,158,.2); }
-.auth-tab   { flex:1; padding:9px; text-align:center; font-family:'Cinzel',serif; font-size:10px; letter-spacing:.14em; color:var(--ink4); cursor:pointer; border:none; background:none; transition:all .2s; }
-.auth-tab.active { background:rgba(46,107,158,.08); color:var(--river); border-bottom:2px solid var(--river2); }
-.field { margin-bottom:14px; }
-.field label { display:block; font-family:'Cinzel',serif; font-size:9.5px; letter-spacing:.18em; color:var(--ink4); margin-bottom:5px; }
-.field input { width:100%; background:#fff; border:1px solid rgba(46,107,158,.2); color:var(--ink); padding:10px 14px; font-family:'Crimson Pro',serif; font-size:16px; outline:none; transition:border-color .2s; }
-.field input:focus { border-color: var(--river2); }
-.auth-btn { width:100%; padding:13px; background:linear-gradient(135deg, var(--forest), var(--river)); border:none; color:#fff; font-family:'Cinzel',serif; font-size:11px; letter-spacing:.14em; cursor:pointer; transition:opacity .2s; margin-bottom:10px; }
-.auth-btn:hover { opacity:.88; }
-.auth-msg { font-family:'Cinzel',serif; font-size:11px; color:var(--blood); text-align:center; min-height:18px; letter-spacing:.06em; }
-
-/* ── FOOTER ──────────────────────────────────────────────── */
-footer {
-  border-top:1px solid rgba(46,107,158,.12); padding:28px 60px;
-  background: var(--ink);
-  display:flex; justify-content:space-between; align-items:center;
-  position:relative; z-index:1;
-}
-.footer-logo  { font-family:'Cinzel',serif; font-size:13px; letter-spacing:.14em; color:rgba(214,234,248,.5); }
-.footer-right { font-family:'Cinzel',serif; font-size:10px; letter-spacing:.1em; color:rgba(214,234,248,.3); }
-
-.hidden { display:none !important; }
-
-/* ── ORNAMENT DIVIDER ─────────────────────────────────────── */
-.orn-divider {
-  display:flex; align-items:center; gap:18px;
-  max-width:1100px; margin:0 auto;
-  padding:0 60px;
-}
-.orn-divider::before, .orn-divider::after {
-  content:''; flex:1; height:1px;
-  background:linear-gradient(90deg, transparent, rgba(46,107,158,.2), transparent);
-}
-.orn-glyph {
-  font-family:'Cinzel',serif; font-size:11px;
-  color:rgba(46,107,158,.45); letter-spacing:.22em; white-space:nowrap;
-}
-
-/* ── RESPONSIVE ──────────────────────────────────────────── */
-@media(max-width:900px) {
-  header { padding:0 20px; }
-  nav    { display:none; }
-  .intro-band { padding:60px 28px 48px; }
-  .pillars-shell { padding:56px 28px; }
-  .world-grid { grid-template-columns:1fr; gap:28px; }
-  .features-shell { padding:56px 28px; }
-  .feature-grid { grid-template-columns:1fr; }
-  .cta-shell { padding:60px 28px; }
-  .support-shell { padding:48px 28px; }
-  footer { padding:24px 20px; flex-direction:column; gap:8px; text-align:center; }
-}
-
-@media(prefers-reduced-motion:reduce) {
-  .hero-bg, .hero-logo-img, .hero-tagline, .hero-eyebrow,
-  .hero-cta, .pt-badge, .hero-scroll-cue { animation:none; }
-}
-</style>
+<link href="styles.css" rel="stylesheet"/>
 </head>
-<body>
-
+<body class="page-index">
 <!-- ── HEADER ─────────────────────────────────────────────── -->
 <header id="site-header">
-  <a class="logo" href="index.html">
-    <div class="logo-mark">⚒</div>
+<a class="logo" href="index.html">
+<div class="logo-mark">⚒</div>
     PROJECT IRONVEIL
   </a>
-  <nav>
-    <a href="community.html">The Forge</a>
-    <a href="download.html">Download</a>
-    <a href="supporter.html" style="color:rgba(240,200,58,.75);border:1px solid rgba(240,200,58,.25);padding:5px 14px;background:rgba(139,105,20,.15);">⚒ Become a Kindler</a>
-  </nav>
-  <div class="header-right" id="header-right">
-    <button class="btn ghost" onclick="openAuth()">⬡ Sign In / Join</button>
-  </div>
+<nav>
+<a class="active" href="index.html">Home</a>
+<a href="community.html">The Forge</a>
+<a href="download.html">Download</a>
+<a class="nav-kindler" href="supporter.html">⚒ Become a Kindler</a>
+</nav>
+<div class="header-right" id="header-right">
+<button class="btn-hdr" onclick="openAuth()">⬡ Sign In / Join</button>
+</div>
 </header>
-
 <!-- ══ CINEMATIC HERO ════════════════════════════════════ -->
 <div class="hero-shell" id="hero-shell">
-  <div class="hero-bg" id="hero-bg"></div>
-  <div class="hero-vignette"></div>
-
-  <div class="hero-content">
-    <div class="hero-eyebrow">Open Development · VR Crafting RPG · Built in Public</div>
-    <img class="hero-logo-img" src="ironveiltitle.png" alt="Ironveil">
-    <p class="hero-tagline">Forge Your Legend in Iron and Fire</p>
-
-    <div class="hero-cta">
-      <a href="community.html" class="btn forest">⚒ Enter the Forge</a>
-      <a href="download.html" class="btn ghost">⬇ Download</a>
-    </div>
-
-    <div class="pt-badge">
-      <div class="pt-pip" id="pt-pip"></div>
-      <span id="pt-text">Checking status…</span>
-    </div>
-  </div>
-
-  <div class="hero-scroll-cue">
-    <span>SCROLL</span>
-    <div class="scroll-arrow"></div>
-  </div>
+<div class="hero-bg" id="hero-bg"></div>
+<div class="hero-vignette"></div>
+<div class="hero-content">
+<div class="hero-eyebrow">Open Development · VR Crafting RPG · Built in Public</div>
+<img alt="Ironveil" class="hero-logo-img" src="ironveiltitle.png"/>
+<p class="hero-tagline">Forge Your Legend in Iron and Fire</p>
+<div class="hero-cta">
+<a class="btn forest" href="community.html">⚒ Enter the Forge</a>
+<a class="btn ghost" href="download.html">⬇ Download</a>
 </div>
-
+<div class="pt-badge">
+<div class="pt-pip" id="pt-pip"></div>
+<span id="pt-text">Checking status…</span>
+</div>
+</div>
+<div class="hero-scroll-cue">
+<span>SCROLL</span>
+<div class="scroll-arrow"></div>
+</div>
+</div>
 <!-- ══ INTRO BAND — dark→light transition ════════════════ -->
 <div class="intro-band">
-  <div class="intro-band-inner">
-    <span class="intro-kicker">What is Ironveil</span>
-    <h2 class="intro-heading">A world of iron,<br><em>built by hands like yours</em></h2>
-    <p class="intro-body">
+<div class="intro-band-inner">
+<span class="intro-kicker">What is Ironveil</span>
+<h2 class="intro-heading">A world of iron,<br/><em>built by hands like yours</em></h2>
+<p class="intro-body">
       Ironveil is an open-world VR crafting RPG where you survive, forge, and shape a living world — one ingot at a time.
     </p>
-    <p class="intro-body-plain">
+<p class="intro-body-plain">
       Mine deep into unstable ruins. Smelt raw ore at your forge. Craft weapons with real hands-on VR mechanics that reward skill, not menus. The world reacts to what you build and who you become.
     </p>
-    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-      <a href="supporter.html" class="btn cta-pale">Support Development →</a>
-      <a href="community.html" class="btn cta-white">Enter the Forge →</a>
-    </div>
-  </div>
+<div class="iv-inline-001">
+<a class="btn cta-pale" href="supporter.html">Support Development →</a>
+<a class="btn cta-white" href="community.html">Enter the Forge →</a>
 </div>
-
+</div>
+</div>
 <!-- ══ PILLARS — What sets it apart ═══════════════════════ -->
 <div class="pillars-shell">
-  <div class="pillars-inner">
-    <span class="section-eyebrow">What Sets It Apart</span>
-    <h2 class="section-heading-light">Four reasons <em>Ironveil</em> is different</h2>
-    <div class="world-grid">
-      <div class="world-item">
-        <div class="world-item-roman">I</div>
-        <div class="world-item-title">Hands-On VR Crafting</div>
-        <p class="world-item-body">Every tool is made with your hands — no crafting menus, no floating interfaces. Heat metal, shape it on the anvil, quench and grind. The forge rewards technique.</p>
-      </div>
-      <div class="world-item">
-        <div class="world-item-roman">II</div>
-        <div class="world-item-title">A World That Changes</div>
-        <p class="world-item-body">Ironveil's world evolves based on what players build and destroy. Mining collapses tunnels. Settlements rise where players forge alliances. Nothing is static.</p>
-      </div>
-      <div class="world-item">
-        <div class="world-item-roman">III</div>
-        <div class="world-item-title">Built in the Open</div>
-        <p class="world-item-body">Every system, every sprint, every design decision is shared publicly. You're not just a player waiting — you're a witness to how a game gets made from scratch.</p>
-      </div>
-      <div class="world-item">
-        <div class="world-item-roman">IV</div>
-        <div class="world-item-title">One Developer, One Vision</div>
-        <p class="world-item-body">No committee. No publisher pressures. Ironveil is built by a single developer with a clear creative direction — and a community that shapes what comes next.</p>
-      </div>
-    </div>
-  </div>
+<div class="pillars-inner">
+<span class="section-eyebrow">What Sets It Apart</span>
+<h2 class="section-heading-light">Four reasons <em>Ironveil</em> is different</h2>
+<div class="world-grid">
+<div class="world-item">
+<div class="world-item-roman">I</div>
+<div class="world-item-title">Hands-On VR Crafting</div>
+<p class="world-item-body">Every tool is made with your hands — no crafting menus, no floating interfaces. Heat metal, shape it on the anvil, quench and grind. The forge rewards technique.</p>
 </div>
-
+<div class="world-item">
+<div class="world-item-roman">II</div>
+<div class="world-item-title">A World That Changes</div>
+<p class="world-item-body">Ironveil's world evolves based on what players build and destroy. Mining collapses tunnels. Settlements rise where players forge alliances. Nothing is static.</p>
+</div>
+<div class="world-item">
+<div class="world-item-roman">III</div>
+<div class="world-item-title">Built in the Open</div>
+<p class="world-item-body">Every system, every sprint, every design decision is shared publicly. You're not just a player waiting — you're a witness to how a game gets made from scratch.</p>
+</div>
+<div class="world-item">
+<div class="world-item-roman">IV</div>
+<div class="world-item-title">One Developer, One Vision</div>
+<p class="world-item-body">No committee. No publisher pressures. Ironveil is built by a single developer with a clear creative direction — and a community that shapes what comes next.</p>
+</div>
+</div>
+</div>
+</div>
 <!-- ══ FEATURE CARDS ═══════════════════════════════════════ -->
 <div class="features-shell">
-  <div class="features-inner">
-    <span class="section-eyebrow">The Pillars</span>
-    <h2 class="section-heading-light">Everything you'll find<br>in <em>the world of Ironveil</em></h2>
-    <div class="feature-grid">
-      <div class="feature-card">
-        <span class="feature-icon">⚔️</span>
-        <div class="feature-title">Combat & Survival</div>
-        <p class="feature-desc">Face creatures shaped by the world's history. Fight with weapons you forged yourself, using real VR physics and weight.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">🔥</span>
-        <div class="feature-title">The Forge System</div>
-        <p class="feature-desc">A deep, tactile metalworking system. Smelt alloys, control temperature, shape blades — every step has consequences.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">🏔️</span>
-        <div class="feature-title">Exploration</div>
-        <p class="feature-desc">Ruins, caverns, and forgotten places to discover. The world holds secrets that reward curiosity and punish carelessness.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">🌍</span>
-        <div class="feature-title">Living World</div>
-        <p class="feature-desc">Dynamic factions, shifting resource locations, and a world state driven by player decisions over time.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">👥</span>
-        <div class="feature-title">Community-Driven Dev</div>
-        <p class="feature-desc">The roadmap is public. Playtester feedback shapes priorities. Your bug reports become the next patch.</p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">🥽</span>
-        <div class="feature-title">VR-First Design</div>
-        <p class="feature-desc">Built from the ground up for Meta Quest 2, Quest 3, and PCVR. Every interaction designed for immersion, not adaptation.</p>
-      </div>
-    </div>
-  </div>
+<div class="features-inner">
+<span class="section-eyebrow">The Pillars</span>
+<h2 class="section-heading-light">Everything you'll find<br/>in <em>the world of Ironveil</em></h2>
+<div class="feature-grid">
+<div class="feature-card">
+<span class="feature-icon">⚔️</span>
+<div class="feature-title">Combat &amp; Survival</div>
+<p class="feature-desc">Face creatures shaped by the world's history. Fight with weapons you forged yourself, using real VR physics and weight.</p>
 </div>
-
+<div class="feature-card">
+<span class="feature-icon">🔥</span>
+<div class="feature-title">The Forge System</div>
+<p class="feature-desc">A deep, tactile metalworking system. Smelt alloys, control temperature, shape blades — every step has consequences.</p>
+</div>
+<div class="feature-card">
+<span class="feature-icon">🏔️</span>
+<div class="feature-title">Exploration</div>
+<p class="feature-desc">Ruins, caverns, and forgotten places to discover. The world holds secrets that reward curiosity and punish carelessness.</p>
+</div>
+<div class="feature-card">
+<span class="feature-icon">🌍</span>
+<div class="feature-title">Living World</div>
+<p class="feature-desc">Dynamic factions, shifting resource locations, and a world state driven by player decisions over time.</p>
+</div>
+<div class="feature-card">
+<span class="feature-icon">👥</span>
+<div class="feature-title">Community-Driven Dev</div>
+<p class="feature-desc">The roadmap is public. Playtester feedback shapes priorities. Your bug reports become the next patch.</p>
+</div>
+<div class="feature-card">
+<span class="feature-icon">🥽</span>
+<div class="feature-title">VR-First Design</div>
+<p class="feature-desc">Built from the ground up for Meta Quest 2, Quest 3, and PCVR. Every interaction designed for immersion, not adaptation.</p>
+</div>
+</div>
+</div>
+</div>
 <!-- ══ CTA BAND ════════════════════════════════════════════ -->
 <div class="cta-shell">
-  <div class="cta-inner">
-    <span class="cta-kicker">Follow the Development</span>
-    <h2 class="cta-heading">Everything happens<br>in The Forge</h2>
-    <p class="cta-body">
+<div class="cta-inner">
+<span class="cta-kicker">Follow the Development</span>
+<h2 class="cta-heading">Everything happens<br/>in The Forge</h2>
+<p class="cta-body">
       Devlogs, patch notes, the public roadmap, sprint updates — every part of how Ironveil gets built is documented and shared.
     </p>
-    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-      <a href="community.html" class="btn cta-white">⚒ Enter The Forge →</a>
-      <a href="download.html" class="btn cta-pale">⬇ Download</a>
-    </div>
-  </div>
+<div class="iv-inline-001">
+<a class="btn cta-white" href="community.html">⚒ Enter The Forge →</a>
+<a class="btn cta-pale" href="download.html">⬇ Download</a>
 </div>
-
+</div>
+</div>
 <!-- ══ SUPPORT ══════════════════════════════════════════════ -->
 <div class="support-shell" id="support">
-  <div class="support-inner">
-    <div class="support-header">
-      <h2 class="support-title">Keep the Forge Burning</h2>
-      <div class="support-rule"></div>
-    </div>
-    <div class="support-box">
-      <a class="gofundme-support-button" href="https://www.gofundme.com/f/fund-the-development-of-ironveil" target="_blank">
-        <span>Fund Ironveil</span>
-        <div class="gofundme-badge"><img src="GoFundMe_logo.png" alt="GoFundMe"></div>
-      </a>
-      <a class="stripe-support-button" href="https://donate.stripe.com/9B6aEX3pGerm5M0buU2oE00" target="_blank">
-        <span>Support Ironveil</span>
-        <div class="stripe-badge"><img src="1685814419stripe-logo-white.png" alt="Stripe"></div>
-      </a>
-      <script src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
-      <script>kofiwidget2.init('Support the forge on Ko-fi','#2d5a3d','I1H5212LN3');kofiwidget2.draw();</script>
-    </div>
-    <p style="text-align:center;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;color:var(--ink4);margin-top:16px;">These are one-time donations and do not guarantee any perks</p>
-  </div>
+<div class="support-inner">
+<div class="support-header">
+<h2 class="support-title">Keep the Forge Burning</h2>
+<div class="support-rule"></div>
 </div>
-
+<div class="support-box">
+<a class="gofundme-support-button" href="https://www.gofundme.com/f/fund-the-development-of-ironveil" target="_blank">
+<span>Fund Ironveil</span>
+<div class="gofundme-badge"><img alt="GoFundMe" src="GoFundMe_logo.png"/></div>
+</a>
+<a class="stripe-support-button" href="https://donate.stripe.com/9B6aEX3pGerm5M0buU2oE00" target="_blank">
+<span>Support Ironveil</span>
+<div class="stripe-badge"><img alt="Stripe" src="1685814419stripe-logo-white.png"/></div>
+</a>
+<script src="https://storage.ko-fi.com/cdn/widget/Widget_2.js"></script>
+<script>kofiwidget2.init('Support the forge on Ko-fi','#2d5a3d','I1H5212LN3');kofiwidget2.draw();</script>
+</div>
+<p class="iv-inline-002">These are one-time donations and do not guarantee any perks</p>
+</div>
+</div>
 <!-- ── FOOTER ──────────────────────────────────────────────── -->
 <footer>
-  <div class="footer-logo">⚒ PROJECT IRONVEIL</div>
-  <div class="footer-right">2026 FullStack-Beck · All Rights Reserved</div>
+<div class="footer-logo">⚒ PROJECT IRONVEIL</div>
+<div class="footer-right">2026 FullStack-Beck · All Rights Reserved</div>
 </footer>
-
 <!-- ── AUTH MODAL ─────────────────────────────────────────── -->
 <div class="auth-overlay" id="auth-overlay" onclick="closeAuth(event)">
-  <div class="auth-box">
-    <div class="auth-head">
-      <div class="auth-title">Ironveil</div>
-      <div class="auth-sub">Join the open development</div>
-    </div>
-    <div class="auth-body">
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tab-in" onclick="switchTab('in')">Sign In</button>
-        <button class="auth-tab" id="tab-up" onclick="switchTab('up')">Join</button>
-      </div>
-      <div id="form-in">
-        <div class="field"><label>Email</label><input type="email" id="in-email" placeholder="your@email.com"></div>
-        <div class="field"><label>Password</label><input type="password" id="in-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSignIn()"></div>
-        <button class="auth-btn" onclick="doSignIn()">Enter the Forge</button>
-      </div>
-      <div id="form-up" style="display:none">
-        <div class="field"><label>Display Name</label><input type="text" id="up-name" placeholder="Your name or alias"></div>
-        <div class="field"><label>Email</label><input type="email" id="up-email" placeholder="your@email.com"></div>
-        <div class="field"><label>Password</label><input type="password" id="up-pass" placeholder="Min. 6 characters" onkeydown="if(event.key==='Enter')doSignUp()"></div>
-        <button class="auth-btn" onclick="doSignUp()">Pledge Your Name</button>
-      </div>
-      <div class="auth-msg" id="auth-msg"></div>
-    </div>
-  </div>
+<div class="auth-box">
+<div class="auth-head">
+<div class="auth-title">Ironveil</div>
+<div class="auth-sub">Join the open development</div>
 </div>
-
+<div class="auth-body">
+<div class="auth-tabs">
+<button class="auth-tab active" id="tab-in" onclick="switchTab('in')">Sign In</button>
+<button class="auth-tab" id="tab-up" onclick="switchTab('up')">Join</button>
+</div>
+<div id="form-in">
+<div class="field"><label>Email</label><input id="in-email" placeholder="your@email.com" type="email"/></div>
+<div class="field"><label>Password</label><input id="in-pass" onkeydown="if(event.key==='Enter')doSignIn()" placeholder="••••••••" type="password"/></div>
+<button class="auth-btn" onclick="doSignIn()">Enter the Forge</button>
+</div>
+<div class="iv-inline-003" id="form-up">
+<div class="field"><label>Display Name</label><input id="up-name" placeholder="Your name or alias" type="text"/></div>
+<div class="field"><label>Email</label><input id="up-email" placeholder="your@email.com" type="email"/></div>
+<div class="field"><label>Password</label><input id="up-pass" onkeydown="if(event.key==='Enter')doSignUp()" placeholder="Min. 6 characters" type="password"/></div>
+<button class="auth-btn" onclick="doSignUp()">Pledge Your Name</button>
+</div>
+<div class="auth-msg" id="auth-msg"></div>
+</div>
+</div>
+</div>
 <script>
 /* ── CONFIG ──────────────────────────────────────────────── */
 const SUPABASE_URL = 'https://tzehikqnnzaykyaomzer.supabase.co';
@@ -822,11 +249,11 @@ function renderHeader() {
     const canAdmin = profile.role==='developer'||profile.role==='admin';
     el.innerHTML = `
       <a class="user-chip" href="profile.html">⚒ ${name}</a>
-      ${canAdmin?`<a class="btn ghost" href="admin.html">⬡ Dev Portal</a>`:''}
-      <button class="btn ghost" onclick="doSignOut()">Sign Out</button>
+      ${canAdmin?`<a class="btn-hdr" href="admin.html">⬡ Dev Portal</a>`:''}
+      <button class="btn-hdr" onclick="doSignOut()">Sign Out</button>
     `;
   } else {
-    el.innerHTML = `<button class="btn ghost" onclick="openAuth()">⬡ Sign In / Join</button>`;
+    el.innerHTML = `<button class="btn-hdr" onclick="openAuth()">⬡ Sign In / Join</button>`;
   }
 }
 
