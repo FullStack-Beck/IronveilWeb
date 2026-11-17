@@ -565,9 +565,8 @@ async function loadFellowship() {
 }
 
 /* ── YOUTUBE LATEST UPLOADS ─────────────────────────────────
-   Add youtube_channel_id to site_config.community_links.
-   Example: {"youtube":"https://www.youtube.com/@FullStack-Icarus",
-             "youtube_channel_id":"UCxxxxxxxxxxxxxxxxxxxxxx"}
+   The channel ID below is the default; an optional site_config.community_links.youtube_channel_id
+   can override it without editing this page.
    The feed is read through RSS2JSON so the browser does not need a YouTube API key.
 */
 async function loadYouTubeVideos(channelId) {
@@ -646,7 +645,7 @@ async function loadYouTubeVideos(channelId) {
 async function loadLinks() {
   const { data } = await sb.from('site_config').select('value').eq('key', 'community_links').maybeSingle();
   const v = data?.value || {};
-  loadYouTubeVideos(v.youtube_channel_id || '');
+  loadYouTubeVideos(v.youtube_channel_id || 'UCpp4PhHCqHkIIxj2RBcGoyA');
 
   // Helper: set href and show/hide element if URL is empty
   function setLink(id, url, fallback) {
