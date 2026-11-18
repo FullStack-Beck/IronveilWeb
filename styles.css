@@ -4196,6 +4196,7 @@ body.page-supporter .iv-inline-013 {width:14px;height:14px;border:2px solid var(
 body.page-supporter .iv-inline-014 {font-family:'Cinzel',serif;font-size:11px;color:var(--ink4);letter-spacing:.08em;}
 
 /* ADMIN — migrated inline presentation styles */
+body.page-admin .iv-inline-001 {display: none;}
 body.page-admin .iv-inline-002 {width:100%;margin-bottom:6px}
 body.page-admin .iv-inline-003 {width:100%;text-decoration:none;display:flex;justify-content:center}
 body.page-admin .iv-inline-004 {margin-bottom:24px}
