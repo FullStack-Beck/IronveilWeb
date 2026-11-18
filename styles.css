@@ -4178,7 +4178,6 @@ body.page-community .iv-inline-016 {display:none}
 body.page-download .iv-inline-001 {opacity:.35;cursor:not-allowed}
 body.page-download .iv-inline-002 {font-family:'Cinzel',serif;font-size:11px;color:var(--ink4);letter-spacing:.1em}
 body.page-download .iv-inline-003 {text-align:center;padding:24px 0;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.3em;color:var(--ink5);position:relative;z-index:1}
-body.page-download .iv-inline-004 {display:none}
 
 /* SUPPORTER — migrated inline presentation styles */
 body.page-supporter .iv-inline-001 {font-family:'IM Fell English',serif;font-style:italic;font-size:16px;color:rgba(245,234,212,.75);max-width:260px;line-height:1.5;}
@@ -4195,10 +4194,8 @@ body.page-supporter .iv-inline-011 {font-size:15px;color:var(--ink3);margin-bott
 body.page-supporter .iv-inline-012 {display:flex;align-items:center;gap:10px;margin-top:12px;}
 body.page-supporter .iv-inline-013 {width:14px;height:14px;border:2px solid var(--gold2);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;}
 body.page-supporter .iv-inline-014 {font-family:'Cinzel',serif;font-size:11px;color:var(--ink4);letter-spacing:.08em;}
-body.page-supporter .iv-inline-015 {display:none}
 
 /* ADMIN — migrated inline presentation styles */
-body.page-admin .iv-inline-001 {display:none}
 body.page-admin .iv-inline-002 {width:100%;margin-bottom:6px}
 body.page-admin .iv-inline-003 {width:100%;text-decoration:none;display:flex;justify-content:center}
 body.page-admin .iv-inline-004 {margin-bottom:24px}
