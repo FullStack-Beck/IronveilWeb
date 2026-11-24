@@ -363,7 +363,7 @@
 <div class="field"><select class="iv-inline-019" id="role-member-sel"></select></div>
 <div class="field"><select id="role-new-val">
 <option value="user">user</option>
-<option value="developer">developer</option>
+<option value="tester">tester</option>
 <option value="admin">admin</option>
 </select></div>
 <button class="btn sm" onclick="changeRole()"><span>Update Role</span></button>
@@ -595,7 +595,7 @@
 <div class="field"><label>Role</label>
 <select id="mm-role">
 <option value="user">user</option>
-<option value="developer">developer</option>
+<option value="tester">tester</option>
 <option value="admin">admin</option>
 </select>
 </div>
@@ -744,9 +744,11 @@ async function initAuth() {
     try {
       const result = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
       currentProfile = result.data;
-      showDashboard();
-      await loadAll();
-      subscribeRealtime();
+      if (await requireAdmin()) {
+        showDashboard();
+        await loadAll();
+        subscribeRealtime();
+      }
     } catch(err) {
       console.error('Profile load error:', err);
     }
@@ -764,9 +766,11 @@ async function initAuth() {
       try {
         const result = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
         currentProfile = result.data;
-        showDashboard();
-        await loadAll();
-        subscribeRealtime();
+        if (await requireAdmin()) {
+          showDashboard();
+          await loadAll();
+          subscribeRealtime();
+        }
       } catch(err) {
         console.error('Profile load error:', err);
       }
@@ -775,6 +779,16 @@ async function initAuth() {
 }
 
 initAuth();
+
+// UI gate only: the database policies are what actually protect writes.
+async function requireAdmin() {
+  if (currentProfile?.role === 'admin') return true;
+  currentUser = null; currentProfile = null;
+  setTimeout(() => sb.auth.signOut(), 0);   // not awaited: avoids a deadlock inside onAuthStateChange
+  showAuth();
+  showAuthError('The Developer Sanctum is for admins only.');
+  return false;
+}
 
 function showAuth() {
   document.getElementById('auth-screen').style.display = 'flex';
@@ -795,7 +809,7 @@ function showDashboard() {
     new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 
   // Admin-only role management section
-  const isAdmin = role === 'admin' || role === 'developer';
+  const isAdmin = role === 'admin';
   document.getElementById('admin-role-section').style.display = isAdmin ? '' : 'none';
 }
 
@@ -1541,7 +1555,7 @@ async function renderMembersPage() {
     <tr>
       <td style="font-family:'Cinzel',serif;color:var(--gold)">${m.display_name || '(unnamed)'}</td>
       <td style="color:var(--ink3)">${m.title || '—'}</td>
-      <td><span class="badge ${m.role === 'admin' ? 'done' : m.role === 'developer' ? 'wip' : 'todo'}">${(m.role || 'user').toUpperCase()}</span></td>
+      <td><span class="badge ${m.role === 'admin' ? 'done' : m.role === 'tester' ? 'wip' : 'todo'}">${(m.role || 'user').toUpperCase()}</span></td>
       <td>${m.is_public ? '<span class="badge pub">PUBLIC</span>' : '<span class="badge hidden">HIDDEN</span>'}</td>
       <td style="font-size:13px;color:var(--ink4)">${m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}</td>
       <td><button class="btn sm secondary" onclick="openMemberModal('${m.id}')"><span>✎ Edit</span></button></td>
