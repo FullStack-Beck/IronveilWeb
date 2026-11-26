@@ -236,7 +236,7 @@ function renderHeader() {
   const el = document.getElementById('header-right');
   if (user && profile) {
     const name     = profile.display_name || user.email.split('@')[0];
-    const canAdmin = profile.role === 'developer' || profile.role === 'admin';
+    const canAdmin = profile.role === 'admin';
     el.innerHTML = `
       <a class="user-chip" href="profile.html">⚒ ${name}</a>
       ${canAdmin ? `<a class="btn-hdr" href="admin.html">⬡ Dev Portal</a>` : ''}
@@ -274,9 +274,8 @@ function setAuthMsg(m){ document.getElementById('auth-msg').textContent = m; }
 const LAUNCHER_RELEASES = {
   windows: { url:'https://github.com/FullStack-Beck/IronveilLauncher/releases/latest/download/IronveilSetup.exe', ver:'v1.0.0 · Windows 10/11 · 64-bit' }
 };
-const DL_ACCESS_ROLES = ['developer','admin','tester'];
+const DL_ACCESS_ROLES = ['admin','tester'];   // 'developer' no longer exists
 const GITHUB_OWNER = 'FullStack-Beck', GITHUB_REPO = 'IronveilLauncher';
-let dlGithubToken = null;
 
 async function initDownloadSection() {
   const ua = navigator.userAgent.toLowerCase();
@@ -286,14 +285,7 @@ async function initDownloadSection() {
   document.getElementById('dl-auth-wall').classList.toggle('hidden', !!user);
   document.getElementById('dl-no-access-wall').classList.toggle('hidden', !user || hasAccess);
   document.getElementById('dl-game-section').classList.toggle('hidden', !hasAccess);
-  if (hasAccess) { await loadGithubToken(); await loadGameBuilds(); }
-}
-
-async function loadGithubToken() {
-  try {
-    const { data } = await sb.from('launcher_config').select('token').eq('id','github').maybeSingle();
-    if (data) dlGithubToken = data.token;
-  } catch {}
+  if (hasAccess) await loadGameBuilds();
 }
 
 function downloadLauncher(os) {
@@ -305,15 +297,10 @@ function downloadLauncher(os) {
 async function loadGameBuilds() {
   const list = document.getElementById('dl-builds-list');
   list.innerHTML = `<div style="font-style:italic;color:var(--ink4);padding:12px 0">Loading builds from the forge…</div>`;
-  if (!dlGithubToken) {
-    list.innerHTML = `<div style="font-style:italic;color:var(--ink4);padding:12px 0">No builds available yet.</div>`;
-    document.getElementById('dl-build-count').textContent = '0 Builds';
-    document.getElementById('dl-build-badge').textContent = '0';
-    return;
-  }
   try {
+    // IronveilLauncher is a public repo, so no token is needed (and none is exposed to the browser)
     const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`, {
-      headers: { 'Authorization':`Bearer ${dlGithubToken}`, 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' }
+      headers: { 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' }
     });
     if (!res.ok) throw new Error(`GitHub API: ${res.status}`);
     const releases = await res.json();
@@ -333,7 +320,7 @@ function renderBuilds(releases) {
     return;
   }
   const makeBtn = (asset, label) => asset
-    ? `<a class="btn-dl" href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/${asset.tag_name || ''}/${asset.name}"><span>⬇</span> ${label}</a>` : '';
+    ? `<a class="btn-dl" href="${asset.browser_download_url}"><span>⬇</span> ${label}</a>` : '';
   list.innerHTML = releases.map(r => {
     const date     = new Date(r.published_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     const winAsset = r.assets?.find(a => a.name.toLowerCase().endsWith('.exe'));
